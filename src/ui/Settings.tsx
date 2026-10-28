@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { checkKey, listModels, type ModelInfo } from "../extract/openrouter";
-import { DEFAULT_MODEL, getApiKey, getModel, setApiKey, setModel } from "../store/settings";
+import { DEFAULT_MODEL, clearApiKey, getApiKey, getModel, setApiKey, setModel } from "../store/settings";
+import { ShareKey } from "./ShareKey";
 import { ThemeSwitch } from "./ThemeSwitch";
 
 const price = (m: ModelInfo) => `$${m.promptPerM.toFixed(2)} in / $${m.completionPerM.toFixed(2)} out per M tokens`;
@@ -23,6 +24,22 @@ export function Settings() {
     setKey(value);
     setApiKey(value);
     setKeyStatus(null);
+    setConfirmClear(false);
+  };
+
+  // Two taps to clear, so a stray tap doesn't lose the key.
+  const [confirmClear, setConfirmClear] = useState(false);
+  useEffect(() => {
+    if (!confirmClear) return;
+    const t = setTimeout(() => setConfirmClear(false), 4000);
+    return () => clearTimeout(t);
+  }, [confirmClear]);
+  const clear = () => {
+    if (!confirmClear) return setConfirmClear(true);
+    clearApiKey();
+    setKey("");
+    setConfirmClear(false);
+    setKeyStatus({ ok: true, text: "Key removed from this device." });
   };
 
   const test = async () => {
@@ -77,11 +94,16 @@ export function Settings() {
           <button type="button" class="button" disabled={!key} onClick={test}>
             Test key
           </button>
+          {key && (
+            <button type="button" class="button" onClick={clear}>
+              {confirmClear ? "Tap again to clear" : "Clear key"}
+            </button>
+          )}
           {keyStatus && <span class={keyStatus.ok ? "note" : "note error"}>{keyStatus.text}</span>}
         </div>
         <p class="note">
-          Stored only on this device and sent only to openrouter.ai. You pay OpenRouter per recipe read (a fraction
-          of a cent with the default model). Setting a credit limit on the key is a good idea.
+          Stored only on this device. It's sent to openrouter.ai to read recipes, and nowhere else unless you create
+          a share link below. You pay OpenRouter per recipe read (a fraction of a cent with the default model).
         </p>
       </section>
 
@@ -116,6 +138,8 @@ export function Settings() {
           )}
         </p>
       </section>
+
+      <ShareKey apiKey={key} />
 
       <section class="section">
         <span class="label">Theme</span>

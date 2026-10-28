@@ -14,3 +14,11 @@ export function write(key: string, value: string): void {
     // ignore
   }
 }
+
+export function remove(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // ignore
+  }
+}

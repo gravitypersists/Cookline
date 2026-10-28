@@ -34,7 +34,7 @@ The structural reference is `designs/C · Transit map-html/C-Transit.dc.html` (s
 | Routing | Hash-based (`#/recipe/:id`), because Pages has no server rewrites. |
 | Install | PWA: web manifest + service worker; "Add to Home Screen" on iOS/Android. |
 | Model access | Browser calls `https://openrouter.ai/api/v1/chat/completions` directly with the user's key (OpenRouter allows browser CORS). |
-| API key | Entered in Settings and stored in `localStorage` on the device. Never committed, never built into the bundle. Recommend the user set a credit limit on the key in OpenRouter. |
+| API key | Entered in Settings and stored in `localStorage` on the device. Never committed, never built into the bundle. Can be cleared in Settings (two taps), or handed to another phone with a one-time share link (§3.1). |
 | Storage | IndexedDB (`idb-keyval`) for recipes and source images (images downscaled, see §4.1). |
 | Viewport | Designed at 390 px wide, must work from 360 px to tablet widths. No horizontal page scroll. |
 | Theme | Light and dark (§6.1). Follows the OS setting by default, with an override in Settings. |
@@ -55,7 +55,17 @@ The structural reference is `designs/C · Transit map-html/C-Transit.dc.html` (s
 4. **Map:** the transit map (§6). Actions: **Edit**, **Share/Export PNG**, **Re-extract**, **Delete**.
 5. **Edit:** a form-level editor for the extracted graph (§7). Saving re-runs scheduling and layout locally, with no model call.
 6. **Library:** saved recipes, newest first, showing title and `~total`. Works offline.
-7. **Settings:** API key, model, and theme (System / Light / Dark).
+7. **Settings:** API key (test, clear), model, theme (System / Light / Dark), and sharing (§3.1).
+
+### 3.1 Share links
+
+Settings → **Share Cookline** creates a link that sets Cookline up on someone else's phone. **Share my key** shares this device's key. **Share a new key** takes a key pasted in, typically one made for that person with a credit limit, and shares it without saving it here.
+
+- **Storage:** a burn-after-reading paste on [PrivateBin](https://privatebin.net), which is free, needs no account, allows cross-origin requests, and deletes a paste on its first read. Password Pusher was the first choice, but it doesn't allow cross-origin reads, so a browser can create a push but not redeem it.
+- **Encryption:** the key is encrypted in the browser in PrivateBin's v2 format: AES-256-GCM, with the AES key derived by PBKDF2-SHA256 (100k iterations) from a random 128-bit secret, and the paste metadata authenticated alongside. PrivateBin only ever sees ciphertext. The paste is set to burn after reading and expire after 1 day.
+- **Link:** `<app>#k<token>`, where the token is 32 base64url characters packing the 8-byte paste id and the 16-byte secret (77 characters in total on GitHub Pages). The IV and salt travel with the paste, not the link. Fragments never reach a server.
+- **Opening a link:** the app takes the token, then immediately replaces the URL with `#/import` so the secret doesn't stay in history or bookmarks. The import screen asks before fetching anything ("Save key" / "No thanks"), so a link preview or prefetch can't use the link up, and a link can't swap someone's key without asking. After saving, it runs the free key check and shows the remaining credit. A used or expired link says so and asks for a new one.
+- **Limits:** privatebin.net allows one paste per 60 seconds per IP, and its message is shown as is. It's a volunteer-run public instance, so if it goes away, keys can still be pasted by hand.
 
 ---
 
@@ -386,6 +396,7 @@ src/
   schedule/    schedule.ts, prep.ts
   layout/      lanes.ts, rows.ts            → pure: (graph, schedule) → RowModel[]
   ui/          TransitMap.tsx, Legend.tsx, Library.tsx, Capture.tsx, Edit.tsx, Settings.tsx
+  share/       privatebin.ts (encrypted burn-after-reading paste), share.ts (link token)
   store/       recipes.ts (idb), settings.ts (localStorage)
   styles/      tokens.css, base.css, transit.css
 fixtures/      curry.json, …

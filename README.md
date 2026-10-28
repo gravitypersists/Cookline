@@ -40,7 +40,8 @@ Open **Settings** and paste an [OpenRouter](https://openrouter.ai) API key, then
 
 - **No server and no subscription.** It's a static site, and the browser calls OpenRouter directly.
 - **You pay OpenRouter per recipe read.** The default model is Claude Haiku 5.5, which costs a fraction of a cent per recipe. You can choose another model in Settings.
-- **Your key stays on your device** (in `localStorage`) and is only ever sent to openrouter.ai. Setting a credit limit on the key is a good idea.
+- **Your key stays on your device** (in `localStorage`) and is only sent to openrouter.ai. Settings can clear it.
+- **Sharing:** Settings can make a one-time link that sets Cookline up on someone else's phone, with your key or one made for them. The key is encrypted on your device and stored on [PrivateBin](https://privatebin.net), which can't read it and deletes it the moment the link is opened. Unused links expire after a day.
 
 ## Deploying
 
@@ -53,6 +54,7 @@ src/model/     recipe types, wire schema (zod), validation
 src/extract/   OpenRouter client, extraction prompt, repair pass, photo downscaling
 src/schedule/  single-cook scheduler and prep placement
 src/layout/    lanes and rows for the map (pure functions)
+src/share/     one-time encrypted share links via PrivateBin
 src/ui/        Preact screens and the transit map
 fixtures/      hand-written recipes covering the main shapes
 SPEC.md        the full spec: data model, scheduling rules, style system, prompt

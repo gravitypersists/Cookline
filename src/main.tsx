@@ -13,8 +13,15 @@ import { Home } from "./ui/Home";
 import { Settings } from "./ui/Settings";
 import { Capture } from "./ui/Capture";
 import { applyStoredTheme } from "./ui/ThemeSwitch";
+import { Import } from "./ui/Import";
+import { parseShareHash } from "./share/share";
 
 applyStoredTheme();
+
+// A share link carries a one-time secret in the fragment. Take it, then
+// replace the URL so the secret doesn't linger in history or bookmarks.
+const shareToken = parseShareHash(location.hash);
+if (shareToken) history.replaceState(null, "", `${location.pathname}${location.search}#/import`);
 
 // Hash routing (SPEC §2), since GitHub Pages has no server rewrites.
 type Route =
@@ -22,7 +29,8 @@ type Route =
   | { name: "new" }
   | { name: "settings" }
   | { name: "fixture"; id: string }
-  | { name: "last" };
+  | { name: "last" }
+  | { name: "import" };
 
 function parse(hash: string): Route {
   const fixture = hash.match(/^#\/fixture\/(.+)$/)?.[1];
@@ -30,6 +38,7 @@ function parse(hash: string): Route {
   if (hash === "#/new") return { name: "new" };
   if (hash === "#/settings") return { name: "settings" };
   if (hash === "#/recipe/last") return { name: "last" };
+  if (hash === "#/import") return { name: "import" };
   return { name: "home" };
 }
 
@@ -100,6 +109,7 @@ function App() {
       {route.name === "settings" && <Settings />}
       {route.name === "fixture" && <MapView key={route.id} graph={fixtures[route.id]!} />}
       {route.name === "last" && <LastRecipe />}
+      {route.name === "import" && <Import token={shareToken} />}
     </>
   );
 }
