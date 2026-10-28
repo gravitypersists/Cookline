@@ -38,27 +38,66 @@ export function estimateCost(m: ModelInfo): CostEstimate {
   return { text: base + RECIPE_TEXT_TOKENS * perIn, photo: base + photoTokens(m.id) * perImage };
 }
 
-// Always in cents, so prices never mix units: "0.11¢", "2.3¢", "12¢", "free".
-// Two significant figures under 10¢, so a photo's small surcharge still shows.
-export function formatCost(usd: number): string {
-  if (usd <= 0) return "free";
+// Prices are always in cents, and fractions of a cent are written as fractions:
+// "0.44¢" reads as 44¢ at a glance, "half a cent" can't. Costs snap to the
+// nearest familiar fraction (nearest on a log scale, so a tenth and an eighth
+// stay distinct) and to whole cents from 1¢ up.
+const FRACTIONS: { cents: number; glyph: string; words: string }[] = [
+  { cents: 0.1, glyph: "⅒", words: "a tenth of a cent" },
+  { cents: 0.125, glyph: "⅛", words: "an eighth of a cent" },
+  { cents: 0.2, glyph: "⅕", words: "a fifth of a cent" },
+  { cents: 0.25, glyph: "¼", words: "a quarter of a cent" },
+  { cents: 1 / 3, glyph: "⅓", words: "a third of a cent" },
+  { cents: 0.5, glyph: "½", words: "half a cent" },
+  { cents: 2 / 3, glyph: "⅔", words: "two-thirds of a cent" },
+  { cents: 0.75, glyph: "¾", words: "three-quarters of a cent" },
+];
+const UNDER_A_TENTH = 0.075; // closer to nothing than to a tenth
+
+type Rounded = { kind: "free" } | { kind: "tiny" } | { kind: "fraction"; glyph: string; words: string } | { kind: "cents"; n: number };
+
+function roundCost(usd: number): Rounded {
+  if (usd <= 0) return { kind: "free" };
   const cents = usd * 100;
-  if (cents < 10) return `${Number(cents.toPrecision(2))}¢`;
-  return `${Math.round(cents).toLocaleString("en-US")}¢`;
+  if (cents < UNDER_A_TENTH) return { kind: "tiny" };
+  const candidates = [...FRACTIONS, { cents: 1, glyph: "", words: "" }];
+  const nearest = candidates.reduce((a, b) =>
+    Math.abs(Math.log(cents / b.cents)) < Math.abs(Math.log(cents / a.cents)) ? b : a,
+  );
+  if (cents < 1 && nearest.cents < 1) return { kind: "fraction", glyph: nearest.glyph, words: nearest.words };
+  return { kind: "cents", n: Math.max(1, Math.round(cents)) };
 }
 
-// Short form for the picker: one number when text and photo round the same.
+const cents = (n: number) => `${n.toLocaleString("en-US")}¢`;
+
+// Compact, for the model picker: "free", "<⅒¢", "⅛¢", "½¢", "2¢".
+export function formatCostShort(usd: number): string {
+  const r = roundCost(usd);
+  if (r.kind === "free") return "free";
+  if (r.kind === "tiny") return "<⅒¢";
+  return r.kind === "fraction" ? `${r.glyph}¢` : cents(r.n);
+}
+
+// In words, for sentences: "free", "less than a tenth of a cent", "half a cent", "2¢".
+export function formatCostWords(usd: number): string {
+  const r = roundCost(usd);
+  if (r.kind === "free") return "free";
+  if (r.kind === "tiny") return "less than a tenth of a cent";
+  return r.kind === "fraction" ? r.words : cents(r.n);
+}
+
+// For the picker: one figure when text and photo round the same.
 export function costLabel(e: CostEstimate): string {
-  const text = formatCost(e.text);
-  const photo = formatCost(e.photo);
+  const text = formatCostShort(e.text);
+  const photo = formatCostShort(e.photo);
   if (text === photo) return text === "free" ? "free" : `~${text}`;
   return `~${text} text · ${photo} photo`;
 }
 
-// Sentence form for under the picker.
+// For under the picker.
 export function costSentence(e: CostEstimate): string {
-  const text = formatCost(e.text);
-  const photo = formatCost(e.photo);
+  const text = formatCostWords(e.text);
+  const photo = formatCostWords(e.photo);
   if (text === "free" && photo === "free") return "Free to use.";
   return text === photo
     ? `About ${text} per recipe, from text or a photo.`

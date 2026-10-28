@@ -113,7 +113,10 @@ render + save
   - plus a typical recipe: 450 tokens of pasted text, or one photo
   - plus ~1,500 output tokens, the size of a detailed graph
 
-  Photo tokens are rough per model family, because OpenRouter's metadata doesn't say: Claude ~2,460, OpenAI ~765, Gemini ~1,300, others ~1,500. They're priced at the model's image rate when it has one. **All prices are in cents** ("0.11¢", "12¢", "1,250¢"), never dollars, so units never mix. Only the key's remaining credit, an account balance rather than a price, is shown in dollars. Text and photo are shown separately when they differ at two significant figures, e.g. "About 0.11¢ per recipe from text, 0.13¢ from a photo." The note adds that a repair pass roughly doubles the cost.
+  Photo tokens are rough per model family, because OpenRouter's metadata doesn't say: Claude ~2,460, OpenAI ~765, Gemini ~1,300, others ~1,500. They're priced at the model's image rate when it has one. **All prices are in cents**, never dollars, so units never mix. Only the key's remaining credit, an account balance rather than a price, is shown in dollars. **Fractions of a cent are written as fractions, never decimals**, since "0.44¢" reads as 44¢ at a glance. Costs snap, on a log scale, to the nearest of a tenth, an eighth, a fifth, a quarter, a third, half, two-thirds or three-quarters of a cent, and to whole cents from 1¢ up. Under 0.075¢ reads "less than a tenth of a cent".
+  - **Picker options** use fraction characters to stay short: "Claude Haiku 5.5 · ~⅛¢", "~¾¢ text · 1¢ photo", "<⅒¢", "free".
+  - **Sentences** use words: "About an eighth of a cent per recipe, from text or a photo.", "About three-quarters of a cent per recipe from text, 1¢ from a photo." The same wording appears under a saved recipe's map ("cost half a cent").
+  - Text and photo are shown separately only when they round to different fractions.
 
 - **Test key** uses `GET /api/v1/key`, which costs nothing and reports the remaining credit.
 - The prompt lives in `src/extract/prompt.ts` as a versioned constant. Each saved recipe records `promptVersion` and `model` so eval results stay comparable.
