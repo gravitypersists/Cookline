@@ -1,0 +1,25 @@
+{
+  "total": 47,
+  "stations": {
+    "dice-eggplant": { "start": 0, "end": 4, "order": 0 },
+    "salt-eggplant": { "start": 4, "end": 19, "order": 1 },
+    "rinse-rice": { "start": 4, "end": 6, "order": 2 },
+    "simmer-rice": { "start": 6, "end": 24, "order": 3 },
+    "dice-onion": { "start": 6, "end": 10, "order": 4 },
+    "sweat": { "start": 10, "end": 18, "order": 5 },
+    "aromatics": { "start": 18, "end": 19, "order": 6 },
+    "bloom": { "start": 19, "end": 20, "order": 7 },
+    "cook-down": { "start": 20, "end": 29, "order": 8 },
+    "sear-eggplant": { "start": 20, "end": 28, "order": 9 },
+    "rest-rice": { "start": 24, "end": 34, "order": 10 },
+    "combine": { "start": 29, "end": 30, "order": 11 },
+    "simmer-sauce": { "start": 30, "end": 45, "order": 12 },
+    "finish": { "start": 45, "end": 46, "order": 13 },
+    "serve": { "start": 46, "end": 47, "order": 14 }
+  },
+  "meanwhile": {
+    "sweat": { "prepIds": ["garlic", "ginger"] },
+    "sear-eggplant": { "prepIds": ["chickpeas"] },
+    "simmer-sauce": { "prepIds": ["lime", "cilantro"], "freeMinutes": 11 }
+  }
+}

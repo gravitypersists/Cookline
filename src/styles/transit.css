@@ -1,0 +1,193 @@
+/* Transit map view (SPEC §6.2–6.5). Lane geometry is computed in
+   src/layout/geometry.ts and applied inline. */
+
+.map-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.map-title {
+  margin: 0;
+  font: var(--text-title);
+  letter-spacing: -0.01em;
+}
+
+.legend {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 calc(-1 * var(--space-4));
+  padding: calc(var(--space-3) + env(safe-area-inset-top)) var(--space-4) var(--space-3);
+  background: var(--paper);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--rule);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: default;
+}
+
+button.legend-item {
+  cursor: pointer;
+}
+
+.legend-item[aria-pressed="true"] {
+  color: var(--ink-1);
+}
+
+.legend-swatch {
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+}
+
+.legend-swatch.waiting {
+  background: repeating-linear-gradient(to bottom, var(--ink-3) 0 4px, transparent 4px 7px);
+}
+
+.map {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  min-height: 64px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gutter {
+  position: relative;
+  flex: none;
+}
+
+.seg,
+.bar,
+.dot {
+  position: absolute;
+  transition: opacity 150ms ease;
+}
+
+.seg {
+  width: 4px;
+}
+
+.bar {
+  top: 22px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.dot {
+  top: 16px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid;
+  background: var(--paper);
+}
+
+.dot.terminal {
+  top: 13px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  box-shadow: inset 0 0 0 3px var(--paper);
+}
+
+.dim {
+  opacity: 0.25;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3) 0 var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+}
+
+.timecode,
+.duration {
+  font: var(--text-num);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.duration.exact {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  align-self: center;
+  font-weight: 700;
+  color: var(--ink-1);
+}
+
+.duration.exact svg {
+  width: 16px;
+  height: 16px;
+}
+
+.station-title {
+  font: var(--text-station);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  font: var(--text-chip);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-chip);
+  padding: 2px 8px;
+}
+
+.chip-secondary {
+  color: var(--ink-2);
+}
+
+.meanwhile {
+  background: var(--paper-raised);
+  border-radius: var(--radius-card);
+  border-left: 3px solid var(--ink-3);
+  padding: var(--space-2) var(--space-3);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--ink-2);
+}
+
+.details p {
+  margin: 0;
+}
+
+.details .source {
+  font-style: italic;
+}

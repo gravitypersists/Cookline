@@ -1,0 +1,119 @@
+<!doctype html>
+<meta charset="utf-8"><style data-dc-design-system-vars>@layer{:root{--bg-000:#0e0d0b;--bg-100:#151411;--bg-200:#1c1a17;--bg-300:#25231f;--bg-sunk:#090807;--line-100:#2a2723;--line-200:#3a3631;--line-300:#7d776d;--ink-100:#ede6d6;--ink-200:#a39c8d;--ink-300:#6f6a60;--signal:#ff6a2b;--signal-soft:#3a1b0e;--on-signal:#0e0d0b;--mark:#7cc8d1;--mark-soft:#14302f;--on-mark:#0e0d0b;--warn:#e7b540;--warn-soft:#33280c;--error:#ff5c8a;--error-soft:#3a1220;--focus:#7cc8d1;--link:#7cc8d1;--playhead:#ff6a2b;--shadow-pop:0 8px 24px -4px #000000cc, 0 0 0 1px #3a3631;--focus-ring:0 0 0 2px #0e0d0b, 0 0 0 4px #7cc8d1;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;--space-8:64px;--radius-none:0;--radius-sm:2px;--radius-md:4px;--radius-lg:6px;--control-sm:24px;--control-md:32px;--control-lg:40px;--font-sans:"Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;--font-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;--text-display:700 56px/56px var(--font-sans);--text-title:600 24px/28px var(--font-sans);--text-heading:600 16px/24px var(--font-sans);--text-body:400 14px/20px var(--font-sans);--text-body-strong:600 14px/20px var(--font-sans);--text-caption:400 12px/16px var(--font-sans);--text-label:600 11px/16px var(--font-sans);--text-readout:500 32px/36px var(--font-mono);--text-timecode:500 13px/16px var(--font-mono);--text-code:400 13px/20px var(--font-mono);--text-micro:500 11px/16px var(--font-mono);}}</style>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C: Transit map</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0e0d0b}
+a{color:#7cc8d1}a:hover{color:#ede6d6}
+.r{display:flex;min-height:60px}
+.k{position:relative;width:112px;flex:none}
+.l{position:absolute;top:0;bottom:0;width:0}
+.dot{position:absolute;top:14px;width:14px;height:14px;box-sizing:border-box;background:#0e0d0b;border-radius:2px}
+.x{flex:1;min-width:0;padding:10px 0 14px;display:flex;flex-direction:column;gap:6px}
+.hd{display:flex;gap:8px;align-items:baseline}
+.tc{font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:16px;color:#a39c8d;font-variant-numeric:tabular-nums}
+.st{font-size:14px;line-height:20px;font-weight:600}
+.du{font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:16px;color:#a39c8d}
+.cs{display:flex;flex-wrap:wrap;gap:4px}
+.ch{font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:18px;border:1px solid #3a3631;border-radius:2px;padding:0 6px;color:#ede6d6}
+.ch i{font-style:normal;color:#a39c8d}
+.mw{font-size:12px;line-height:16px;color:#7cc8d1}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 1320px; box-sizing: border-box; padding: 24px 16px; background: #0e0d0b; color: #ede6d6; font-family: 'Archivo', Helvetica, Arial, sans-serif; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.08em; color: #a39c8d">C · TRANSIT MAP</div>
+    <h1 style="margin: 0; font-size: 24px; line-height: 28px; font-weight: 600; letter-spacing: -0.01em">Eggplant &amp; chickpea curry</h1>
+    <div style="font-size: 12px; line-height: 16px; color: #a39c8d">Each component is a line; steps are stations in start order. Lines merge where components combine. To trace anything back, ride its line up.</div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 8px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; line-height: 16px; color: #a39c8d; border-bottom: 1px solid #3a3631; padding-bottom: 12px">
+    <span style="display: flex; align-items: center; gap: 6px"><span style="width: 4px; height: 14px; background: #e7b540"></span>RICE</span>
+    <span style="display: flex; align-items: center; gap: 6px"><span style="width: 4px; height: 14px; background: #ede6d6"></span>EGGPLANT</span>
+    <span style="display: flex; align-items: center; gap: 6px"><span style="width: 4px; height: 14px; background: #ff6a2b"></span>SAUCE</span>
+    <span style="display: flex; align-items: center; gap: 6px"><span style="height: 14px; border-left: 4px dashed #a39c8d"></span>WAITING</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column">
+    <div class="r">
+      <div class="k"><div class="l" style="left: 54px; top: 21px; border-left: 4px solid #ede6d6"></div><div class="dot" style="left: 49px; border: 3px solid #ede6d6"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+00</span><span class="st">Dice eggplant</span><span class="du">4m</span></div><div class="cs"><span class="ch">eggplant <i>1 large</i></span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 54px; border-left: 4px dashed #ede6d6"></div><div class="dot" style="left: 49px; border: 3px solid #ede6d6"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+04</span><span class="st">Salt, rest</span><span class="du">15m</span></div><div class="cs"><span class="ch">+ kosher salt <i>1 tsp</i></span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; top: 21px; border-left: 4px solid #e7b540"></div><div class="l" style="left: 54px; border-left: 4px dashed #ede6d6"></div><div class="dot" style="left: 13px; border: 3px solid #e7b540"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+04</span><span class="st">Rinse rice</span><span class="du">2m</span></div><div class="cs"><span class="ch">rice <i>1½ c</i></span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 54px; border-left: 4px dashed #ede6d6"></div><div class="dot" style="left: 13px; border: 3px solid #e7b540"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+06</span><span class="st">Simmer, lid on</span><span class="du">18m</span></div><div class="cs"><span class="ch">+ water <i>2¼ c</i></span><span class="ch">+ salt <i>½ tsp</i></span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 54px; border-left: 4px dashed #ede6d6"></div><div class="l" style="left: 90px; top: 21px; border-left: 4px solid #ff6a2b"></div><div class="dot" style="left: 85px; border: 3px solid #ff6a2b"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+06</span><span class="st">Dice onion</span><span class="du">4m</span></div><div class="cs"><span class="ch">onion <i>1</i></span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 54px; border-left: 4px dashed #ede6d6"></div><div class="l" style="left: 90px; border-left: 4px solid #ff6a2b"></div><div class="dot" style="left: 85px; border: 3px solid #ff6a2b"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+10</span><span class="st">Sweat</span><span class="du">8m</span></div><div class="cs"><span class="ch">+ oil <i>2 tbsp</i></span></div><div class="mw">Meanwhile: mince garlic, grate ginger</div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 54px; border-left: 4px dashed #ede6d6"></div><div class="l" style="left: 90px; border-left: 4px solid #ff6a2b"></div><div class="dot" style="left: 85px; border: 3px solid #ff6a2b"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+18</span><span class="st">Add aromatics</span><span class="du">1m</span></div><div class="cs"><span class="ch">+ garlic <i>4 cl, minced</i></span><span class="ch">+ ginger <i>1 in, grated</i></span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 54px; border-left: 4px dashed #ede6d6"></div><div class="l" style="left: 90px; border-left: 4px solid #ff6a2b"></div><div class="dot" style="left: 85px; border: 3px solid #ff6a2b"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+19</span><span class="st">Bloom spices</span><span class="du">1m</span></div><div class="cs"><span class="ch">+ curry powder <i>2 tbsp</i></span><span class="ch">+ cumin seed <i>1 tsp</i></span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 54px; border-left: 4px dashed #ede6d6"></div><div class="l" style="left: 90px; border-left: 4px solid #ff6a2b"></div><div class="dot" style="left: 85px; border: 3px solid #ff6a2b"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+20</span><span class="st">Cook down</span><span class="du">9m</span></div><div class="cs"><span class="ch">+ crushed tomatoes <i>14 oz</i></span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 54px; border-left: 4px solid #ede6d6"></div><div class="l" style="left: 90px; border-left: 4px solid #ff6a2b"></div><div class="dot" style="left: 49px; border: 3px solid #ede6d6"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+20</span><span class="st">Pat dry, sear</span><span class="du">8m</span></div><div class="cs"><span class="ch">+ oil <i>2 tbsp</i></span></div><div class="mw">Meanwhile: drain and rinse chickpeas</div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 54px; border-left: 4px solid #ede6d6"></div><div class="l" style="left: 90px; border-left: 4px solid #ff6a2b"></div><div class="dot" style="left: 13px; border: 3px solid #e7b540"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+24</span><span class="st">Rice off heat, rest</span><span class="du">10m</span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 54px; height: 21px; bottom: auto; border-left: 4px solid #ede6d6"></div><div style="position: absolute; left: 54px; width: 38px; top: 19px; height: 4px; background: #ede6d6"></div><div class="l" style="left: 90px; border-left: 4px solid #ff6a2b"></div><div class="dot" style="left: 85px; border: 3px solid #ff6a2b"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+29</span><span class="st">Combine</span><span class="du">1m</span></div><div class="cs"><span class="ch">+ seared eggplant</span><span class="ch">+ chickpeas <i>drained</i></span><span class="ch">+ coconut milk <i>13.5 oz</i></span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 90px; border-left: 4px dashed #ff6a2b"></div><div class="dot" style="left: 85px; border: 3px solid #ff6a2b"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+30</span><span class="st">Simmer</span><span class="du">15m</span></div><div class="mw">Meanwhile, 11 free minutes: juice lime, chop cilantro</div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; border-left: 4px dashed #e7b540"></div><div class="l" style="left: 90px; border-left: 4px solid #ff6a2b"></div><div class="dot" style="left: 85px; border: 3px solid #ff6a2b"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+45</span><span class="st">Finish</span><span class="du">1m</span></div><div class="cs"><span class="ch">+ lime <i>juiced</i></span><span class="ch">+ cilantro <i>chopped</i></span></div></div>
+    </div>
+    <div class="r">
+      <div class="k"><div class="l" style="left: 18px; height: 21px; bottom: auto; border-left: 4px dashed #e7b540"></div><div style="position: absolute; left: 18px; width: 74px; top: 19px; height: 4px; background: #e7b540"></div><div class="l" style="left: 90px; height: 21px; bottom: auto; border-left: 4px solid #ff6a2b"></div><div class="dot" style="left: 83px; top: 12px; width: 18px; height: 18px; background: #ff6a2b; border: 3px solid #ff6a2b"></div></div>
+      <div class="x"><div class="hd"><span class="tc">T+46</span><span class="st">Serve over rice</span></div></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1320}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
