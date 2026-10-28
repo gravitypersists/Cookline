@@ -39,7 +39,7 @@ Open **Settings** and paste an [OpenRouter](https://openrouter.ai) API key, then
 ## Costs and privacy
 
 - **No server and no subscription.** It's a static site, and the browser calls OpenRouter directly.
-- **You pay OpenRouter per recipe read.** The default model is Claude Haiku 5.5, which costs a fraction of a cent per recipe. You can choose another model in Settings.
+- **You pay OpenRouter per recipe read.** The recommended model, Claude Haiku 5.5, costs about 0.1¢ per recipe. Settings lists other models with an estimated cost per recipe for each.
 - **Your key stays on your device** (in `localStorage`) and is only sent to openrouter.ai. Settings can clear it.
 - **Sharing:** Settings can make a one-time link that sets Cookline up on someone else's phone, with your key or one made for them. The key is encrypted on your device and stored on [PrivateBin](https://privatebin.net), which can't read it and deletes it the moment the link is opened. Unused links expire after a day.
 

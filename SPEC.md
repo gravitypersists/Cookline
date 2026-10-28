@@ -90,7 +90,13 @@ render + save
 ### 4.1 Model call
 - One request, with the image(s) as `image_url` data URLs, plus the system prompt in **Appendix A**. Use `response_format: { type: "json_schema", strict: true }` and `provider: { require_parameters: true }`, so OpenRouter only routes to providers that honor the schema.
 - **Wire format** (`src/model/schema.ts`): strict mode needs every property present, so the schema the model fills in is the §5.1 types with optional fields made **nullable** instead of omitted. `fromWire` turns nulls into missing fields. The JSON Schema is generated from zod.
-- The model is configurable in Settings. The picker lists only models from OpenRouter's `/models` that take image input and support `structured_outputs` (excluding batch-only and router models), sorted by price. The default is `anthropic/claude-haiku-5.5` ($0.10 / $0.50 per M tokens, roughly 0.2¢ per recipe); the eval in §9 revisits it.
+- The model is configurable in Settings. The picker lists only models from OpenRouter's `/models` that take image input and support `structured_outputs` (excluding batch-only and router models). The **recommended** model, `anthropic/claude-haiku-5.5` ($0.10 / $0.50 per M tokens), is preselected and listed first, labelled "(recommended)". The eval in §9 revisits it. The rest are sorted by estimated cost per photo.
+- **Cost per recipe** (`src/extract/cost.ts`) appears in each option and as a sentence under the picker. It is an estimate, made of:
+  - the prompt actually sent (system prompt, examples and schema, at ~3.6 characters per token)
+  - plus a typical recipe: 450 tokens of pasted text, or one photo
+  - plus ~1,500 output tokens, the size of a detailed graph
+
+  Photo tokens are rough per model family, because OpenRouter's metadata doesn't say: Claude ~2,460, OpenAI ~765, Gemini ~1,300, others ~1,500. They're priced at the model's image rate when it has one. Text and photo are shown separately when they differ at two significant figures, e.g. "About 0.11¢ per recipe from text, 0.13¢ from a photo." The note adds that a repair pass roughly doubles the cost.
 - **Test key** uses `GET /api/v1/key`, which costs nothing and reports the remaining credit.
 - The prompt lives in `src/extract/prompt.ts` as a versioned constant. Each saved recipe records `promptVersion` and `model` so eval results stay comparable.
 
@@ -432,7 +438,7 @@ Scheduling and layout are **pure functions** with no DOM. The UI renders `RowMod
   - validation pass rate before and after repair
   - cost per recipe
 
-  It picks the default model. The eval runs locally with your key, not in CI.
+  It picks the recommended model. The eval runs locally with your key, not in CI.
 
 ---
 
@@ -461,7 +467,7 @@ Scheduling and layout are **pure functions** with no DOM. The UI renders `RowMod
 3. **Extraction:** Settings (key, model), the OpenRouter call with the Appendix A prompt, validation, repair; text input first, then images.
 4. **App shell:** Library, Capture, Processing, IndexedDB, PWA install and offline use, PNG export/share.
 5. **Edit screen.**
-6. **Quality:** the eval set, prompt tuning, choosing the default model.
+6. **Quality:** the eval set, prompt tuning, choosing the recommended model.
 
 ---
 

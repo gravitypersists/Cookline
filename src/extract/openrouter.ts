@@ -107,6 +107,7 @@ export interface ModelInfo {
   name: string;
   promptPerM: number; // USD per million input tokens
   completionPerM: number;
+  imagePerM?: number; // USD per million image tokens, when priced apart from text
 }
 
 // Models that can read photos and honor a JSON schema. Batch-only and router
@@ -129,6 +130,6 @@ export async function listModels(signal?: AbortSignal): Promise<ModelInfo[]> {
       name: m.name ?? m.id,
       promptPerM: Number(m.pricing.prompt) * 1e6,
       completionPerM: Number(m.pricing.completion) * 1e6,
-    }))
-    .sort((a, b) => a.promptPerM + a.completionPerM - (b.promptPerM + b.completionPerM));
+      imagePerM: Number(m.pricing.image) > 0 ? Number(m.pricing.image) * 1e6 : undefined,
+    }));
 }

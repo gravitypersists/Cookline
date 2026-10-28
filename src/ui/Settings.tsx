@@ -1,10 +1,23 @@
 import { useEffect, useState } from "preact/hooks";
 import { checkKey, listModels, type ModelInfo } from "../extract/openrouter";
-import { DEFAULT_MODEL, clearApiKey, getApiKey, getModel, setApiKey, setModel } from "../store/settings";
+import { RECOMMENDED_MODEL, clearApiKey, getApiKey, getModel, setApiKey, setModel } from "../store/settings";
+import { costLabel, costSentence, estimateCost } from "../extract/cost";
 import { ShareKey } from "./ShareKey";
 import { ThemeSwitch } from "./ThemeSwitch";
 
 const price = (m: ModelInfo) => `$${m.promptPerM.toFixed(2)} in / $${m.completionPerM.toFixed(2)} out per M tokens`;
+
+// Recommended first, then cheapest per photo (the usual way in).
+function byCost(models: ModelInfo[]): ModelInfo[] {
+  return [...models].sort(
+    (a, b) =>
+      Number(b.id === RECOMMENDED_MODEL) - Number(a.id === RECOMMENDED_MODEL) ||
+      estimateCost(a).photo - estimateCost(b).photo,
+  );
+}
+
+const optionLabel = (m: ModelInfo) =>
+  `${m.name}${m.id === RECOMMENDED_MODEL ? " (recommended)" : ""} · ${costLabel(estimateCost(m))}`;
 
 export function Settings() {
   const [key, setKey] = useState(getApiKey);
@@ -16,7 +29,7 @@ export function Settings() {
 
   useEffect(() => {
     const ctrl = new AbortController();
-    listModels(ctrl.signal).then(setModels, () => setModelsError(true));
+    listModels(ctrl.signal).then((m) => setModels(byCost(m)), () => setModelsError(true));
     return () => ctrl.abort();
   }, []);
 
@@ -103,7 +116,7 @@ export function Settings() {
         </div>
         <p class="note">
           Stored only on this device. It's sent to openrouter.ai to read recipes, and nowhere else unless you create
-          a share link below. You pay OpenRouter per recipe read (a fraction of a cent with the default model).
+          a share link below. You pay OpenRouter per recipe read (a fraction of a cent with the recommended model).
         </p>
       </section>
 
@@ -114,7 +127,7 @@ export function Settings() {
         {options ? (
           <select id="model" class="select" value={model} onChange={(e) => chooseModel((e.target as HTMLSelectElement).value)}>
             {options.map((m) => (
-              <option value={m.id}>{m.id === DEFAULT_MODEL ? `${m.name} (default)` : m.name}</option>
+              <option value={m.id}>{m.promptPerM === undefined ? m.name : optionLabel(m)}</option>
             ))}
           </select>
         ) : (
@@ -126,13 +139,18 @@ export function Settings() {
             onInput={(e) => chooseModel((e.target as HTMLInputElement).value)}
           />
         )}
+        {selected && (
+          <p class="note">
+            {costSentence(estimateCost(selected))} A second pass to fix mistakes, when needed, roughly doubles it.
+          </p>
+        )}
         <p class="note">
           {selected ? price(selected) : "Only models that can read photos and follow a JSON schema are listed."}
-          {model !== DEFAULT_MODEL && (
+          {model !== RECOMMENDED_MODEL && (
             <>
               {" · "}
-              <button type="button" class="text-button" onClick={() => chooseModel(DEFAULT_MODEL)}>
-                Use default
+              <button type="button" class="text-button" onClick={() => chooseModel(RECOMMENDED_MODEL)}>
+                Use recommended
               </button>
             </>
           )}
