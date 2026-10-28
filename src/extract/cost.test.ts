@@ -23,7 +23,8 @@ describe("cost estimates", () => {
     expect(formatCost(0.0086)).toBe("0.86¢");
     expect(formatCost(0.001)).toBe("0.1¢");
     expect(formatCost(0.023)).toBe("2.3¢");
-    expect(formatCost(0.12)).toBe("$0.12");
+    expect(formatCost(0.12)).toBe("12¢");
+    expect(formatCost(12.5)).toBe("1,250¢");
     expect(formatCost(0)).toBe("free");
   });
 

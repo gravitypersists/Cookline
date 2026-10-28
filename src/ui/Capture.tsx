@@ -4,6 +4,7 @@ import { downscale } from "../extract/image";
 import { getApiKey, getModel } from "../store/settings";
 import { saveExtraction } from "../store/recipes";
 import { describeFailure } from "./failure";
+import { Camera, Photos } from "./icons";
 
 type Mode = "photos" | "text";
 type Status =
@@ -92,12 +93,14 @@ export function Capture() {
 
       {mode === "photos" ? (
         <section class="section">
-          <div class="field-row">
-            <label class="button">
-              Take photo
+          <div class="capture-tiles">
+            <label class="tile">
+              <Camera />
+              {images.length ? "Take another" : "Take photo"}
               <input type="file" accept="image/*" capture="environment" hidden onChange={(e) => addFiles((e.target as HTMLInputElement).files)} />
             </label>
-            <label class="button">
+            <label class="tile">
+              <Photos />
               Choose photos
               <input type="file" accept="image/*" multiple hidden onChange={(e) => addFiles((e.target as HTMLInputElement).files)} />
             </label>
@@ -149,7 +152,7 @@ export function Capture() {
         </div>
       )}
 
-      <button type="button" class="button primary" disabled={!ready} onClick={run}>
+      <button type="button" class="button primary wide" disabled={!ready} onClick={run}>
         {status.kind === "failed" ? "Try again" : "Make map"}
       </button>
     </main>

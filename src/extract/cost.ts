@@ -38,13 +38,13 @@ export function estimateCost(m: ModelInfo): CostEstimate {
   return { text: base + RECIPE_TEXT_TOKENS * perIn, photo: base + photoTokens(m.id) * perImage };
 }
 
-// "0.11¢", "2.3¢", "$0.12", "free". Two significant figures, so a photo's
-// small surcharge over text still shows.
+// Always in cents, so prices never mix units: "0.11¢", "2.3¢", "12¢", "free".
+// Two significant figures under 10¢, so a photo's small surcharge still shows.
 export function formatCost(usd: number): string {
   if (usd <= 0) return "free";
   const cents = usd * 100;
   if (cents < 10) return `${Number(cents.toPrecision(2))}¢`;
-  return `$${usd.toFixed(2)}`;
+  return `${Math.round(cents).toLocaleString("en-US")}¢`;
 }
 
 // Short form for the picker: one number when text and photo round the same.

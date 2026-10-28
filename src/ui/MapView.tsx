@@ -6,6 +6,7 @@ import { plan } from "../schedule/plan";
 import { exportPng } from "./export";
 import { TopBar } from "./TopBar";
 import { TransitMap } from "./TransitMap";
+import { Share } from "./icons";
 
 // A recipe's transit map, with export in the top bar and anything else (actions,
 // details) underneath.
@@ -34,6 +35,7 @@ export function MapView({ graph, children }: { graph: RecipeGraph; children?: Co
     <>
       <TopBar>
         <button type="button" class="topbar-button" disabled={exporting} onClick={onExport}>
+          <Share />
           {exporting ? "Exporting…" : "Share image"}
         </button>
       </TopBar>

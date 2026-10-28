@@ -3,6 +3,7 @@ import { extractRecipe, type ExtractInput } from "../extract/extract";
 import { getApiKey, getModel } from "../store/settings";
 import { deleteRecipe, getRecipe, getSource, replaceExtraction, type RecipeRecord } from "../store/recipes";
 import { describeFailure } from "./failure";
+import { formatCost } from "../extract/cost";
 import { MapView } from "./MapView";
 import { TopBar } from "./TopBar";
 
@@ -56,7 +57,7 @@ export function RecipeView({ id }: { id: string }) {
     location.hash = "#/";
   };
 
-  const cost = record.cost !== undefined ? ` · $${record.cost.toFixed(4)}` : "";
+  const cost = record.cost !== undefined ? ` · ${formatCost(record.cost)}` : "";
   const canReread = source !== undefined && getApiKey() !== "";
 
   return (

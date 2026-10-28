@@ -60,8 +60,12 @@ The structural reference is `designs/C · Transit map-html/C-Transit.dc.html` (s
    - **Read again** sends the saved source to the current model and replaces the graph in place, keeping the id and date.
    - **Edit** comes in milestone 5.
 5. **Edit:** a form-level editor for the extracted graph (§7). Saving re-runs scheduling and layout locally, with no model call.
-6. **Library** (Home): **New recipe**, then saved recipes, newest first, each showing its title, `~total` and age ("today", "3 days ago"), then the example fixtures under a collapsed **Examples**, then Settings. Works offline. The milestone 3 "last extraction" in localStorage is moved into the library once.
-7. **Settings:** API key (test, clear), model, theme (System / Light / Dark), and sharing (§3.1).
+6. **Library** (Home):
+   - The header has "Cookline" with a one-line tagline, and a **Settings** cog (48px) at the top right.
+   - Below it: **New recipe** (full width, with a camera icon), then the saved recipes, newest first.
+   - Each recipe card shows a glyph of its lines (one 4×24 bar per line, in map order and color), its title, `~total` and age ("today", "3 days ago"), and a chevron.
+   - Then the example fixtures under **Examples**, which is open when nothing is saved yet and collapsed otherwise. Works offline. The milestone 3 "last extraction" in localStorage is moved into the library once.
+7. **Settings:** four panels: **OpenRouter key** (test, clear), **Model** (picker plus the estimated cost per recipe), **Share Cookline** (§3.1), and **Appearance** (System / Light / Dark).
 
 ### 3.1 Share links
 
@@ -97,13 +101,13 @@ render + save
 
 - One request, with the image(s) as `image_url` data URLs, plus the system prompt in **Appendix A**. Use `response_format: { type: "json_schema", strict: true }` and `provider: { require_parameters: true }`, so OpenRouter only routes to providers that honor the schema.
 - **Wire format** (`src/model/schema.ts`): strict mode needs every property present, so the schema the model fills in is the §5.1 types with optional fields made **nullable** instead of omitted. `fromWire` turns nulls into missing fields. The JSON Schema is generated from zod.
-- The model is configurable in Settings. The picker lists only models from OpenRouter's `/models` that take image input and support `structured_outputs` (excluding batch-only and router models). The **recommended** model, `anthropic/claude-haiku-5.5` ($0.10 / $0.50 per M tokens), is preselected and listed first, labelled "(recommended)". The eval in §9 revisits it. The rest are sorted by estimated cost per photo.
+- The model is configurable in Settings. The picker lists only models from OpenRouter's `/models` that take image input and support `structured_outputs` (excluding batch-only and router models). The **recommended** model, `anthropic/claude-haiku-5.5`, is preselected and sits alone in a "Recommended" group at the top. The eval in §9 revisits it. The rest are grouped by provider (taken from OpenRouter's "Provider: Model" names, A to Z) and sorted by estimated cost per photo within each group. Options show the model name without the provider, plus its cost. Per-token prices are not shown, since the per-recipe estimate replaces them.
 - **Cost per recipe** (`src/extract/cost.ts`) appears in each option and as a sentence under the picker. It is an estimate, made of:
   - the prompt actually sent (system prompt, examples and schema, at ~3.6 characters per token)
   - plus a typical recipe: 450 tokens of pasted text, or one photo
   - plus ~1,500 output tokens, the size of a detailed graph
 
-  Photo tokens are rough per model family, because OpenRouter's metadata doesn't say: Claude ~2,460, OpenAI ~765, Gemini ~1,300, others ~1,500. They're priced at the model's image rate when it has one. Text and photo are shown separately when they differ at two significant figures, e.g. "About 0.11¢ per recipe from text, 0.13¢ from a photo." The note adds that a repair pass roughly doubles the cost.
+  Photo tokens are rough per model family, because OpenRouter's metadata doesn't say: Claude ~2,460, OpenAI ~765, Gemini ~1,300, others ~1,500. They're priced at the model's image rate when it has one. **All prices are in cents** ("0.11¢", "12¢", "1,250¢"), never dollars, so units never mix. Only the key's remaining credit, an account balance rather than a price, is shown in dollars. Text and photo are shown separately when they differ at two significant figures, e.g. "About 0.11¢ per recipe from text, 0.13¢ from a photo." The note adds that a repair pass roughly doubles the cost.
 
 - **Test key** uses `GET /api/v1/key`, which costs nothing and reports the remaining credit.
 - The prompt lives in `src/extract/prompt.ts` as a versioned constant. Each saved recipe records `promptVersion` and `model` so eval results stay comparable.
@@ -288,33 +292,38 @@ Contrast ratios are measured against `--paper`. `--ink-2` also passes on `--pape
 | `--font-ui`      | Atkinson Hyperlegible Next, `system-ui`     | everything by default |
 | `--font-num`     | Atkinson Hyperlegible Mono, `ui-monospace`  | timecodes, durations  |
 | `--font-title`   | Fraunces (opsz axis), `Georgia`             | recipe title only     |
-| `--text-title`   | 600 28/32 `--font-title`                    | recipe title          |
-| `--text-station` | 700 17/24                                   | station title         |
+| `--text-display` | 600 32/40 `--font-title`                    | "Cookline" on Home    |
+| `--text-title`   | 600 28/32 `--font-title`                    | recipe and page titles |
+| `--text-heading` | 700 18/24                                   | Settings panel titles |
+| `--text-station` | 700 17/24 (32 in map headings)              | station title, buttons |
 | `--text-body`    | 400 16/24                                   | body, meanwhile       |
-| `--text-chip`    | 400 14/20                                   | ingredient chips      |
-| `--text-num`     | 500 13/20 `--font-num`, `tabular-nums`      | timecode, duration    |
+| `--text-small`   | 400 14/24                                   | chips, notes          |
+| `--text-num`     | 500 13/24 `--font-num`, `tabular-nums`      | timecode, duration    |
 | `--text-label`   | 700 11/16, letter-spacing 0.06em, uppercase | eyebrow, legend       |
+
+Every line height is a multiple of 8.
 
 Atkinson Hyperlegible is designed for legibility at low vision, distance and glance, which is the kitchen use case. Fraunces gives the title some cookbook warmth and appears nowhere else.
 
 **Spacing, shape, controls**
 
-- Spacing scale: 4, 8, 12, 16, 24, 32, 48 (`--space-1`…`--space-7`).
-- Radii: `--radius-chip` 6px, `--radius-card` 12px.
-- Every tap target is at least 44×44 px.
-- Primary button: `--ink-1` background with `--paper` text. Secondary button: 1px `--rule` outline.
+- **8pt grid everywhere:** every margin, padding, gap and component size is a multiple of 8: `--s1` 8, `--s2` 16, `--s3` 24, `--s4` 32, `--s5` 40, `--s6` 48, `--s8` 64. The only exception is `--s-half` (4px), used just for icon-to-label gaps and the segmented control's inset.
+- Radii: `--radius-sm` 8px (chips, thumbnails, callouts), `--radius-md` 16px (cards, panels, buttons, inputs).
+- Every tap target is at least 48×48 px (`--tap`).
+- Buttons: primary is `--ink-1` with `--paper` text; secondary is `--paper-raised` with a 1px `--rule` border. Both are 48px tall, with an optional 24px icon.
+- Icons: 24px stroke icons (1.75 stroke, `currentColor`) in `src/ui/icons.tsx`.
 - Focus ring: 2px `--ink-1` outline at a 2px offset.
 
 ### 6.2 Page structure (top to bottom)
 
-Page: padding `24px 16px`, vertical gap `16px`, background `--paper`, text `--ink-1`.
+Page: padding `24px 16px 48px`, vertical gap `24px`, background `--paper`, text `--ink-1`. The top bar above it is 48px: a back link ("‹ Recipes") on the left and page actions ("Share image") on the right.
 
 1. **Header** (vertical, gap 4px):
    - **Eyebrow** (`--text-label`, `--ink-2`): `~{total} MIN · SERVES {servings}`. The servings part is omitted if unknown.
    - **Title** (`--text-title`).
 2. **Legend:**
    - **Sticky** to the top of the screen (`position: sticky; top: 0`) on a `--paper` background, full-bleed to the page edges, with `env(safe-area-inset-top)` added to its top padding. It stays visible while you scroll so you can always tell the lines apart.
-   - Flex-wrap, gap `8px 16px`, `--text-label`, `--ink-2`, padding 12px, bottom border 1px `--rule`.
+   - Flex-wrap, column gap 16px, entries 32px tall, `--text-label`, `--ink-2`, padding 8px 16px, bottom border 1px `--rule`.
    - One entry per component, leftmost lane first: a 4×16 px line sample in the line color, then the name.
    - Then one key entry, **WAITING**: a dashed sample in `--ink-3`. (`~` and `⏱` are self-explanatory and have no legend entry.)
    - Tapping a component entry highlights its line (§6.5).
@@ -322,14 +331,14 @@ Page: padding `24px 16px`, vertical gap `16px`, background `--paper`, text `--in
 
 ### 6.3 Map rows and geometry
 
-Each row is `display:flex; min-height:64px` with two parts:
+Each row is `display:flex; min-height:64px` with two parts. All positions sit on the 24px dot line (`DOT_CENTER`):
 
-- **Gutter:** `position:relative; flex:none`. Width = `28 × lanes + 8` px (92 px for 3 lanes).
-- **Content:** `flex:1; min-width:0; padding:12px 0 16px; display:flex; flex-direction:column; gap:8px`.
+- **Gutter:** `position:relative; flex:none`. Width = `24 × lanes + 16` px (88 px for 3 lanes).
+- **Content:** `flex:1; min-width:0; padding:8px 0 16px; display:flex; flex-direction:column; gap:8px`. The heading line is 32px tall, so its middle (8 + 16) sits on the dot line.
 
 **Lanes**
 
-- Lane _i_ (0 = leftmost) is centered at `x = 14 + 28i`.
+- Lane _i_ (0 = leftmost) is centered at `x = 16 + 24i`.
 - Each line segment is a 4 px wide absolutely positioned element at `left: x − 2`.
 - The trunk is the rightmost lane.
 - The other components sit to its left, ordered by **merge time**: the one that merges earliest is nearest its target. This keeps merge bars from crossing live lines.
@@ -351,13 +360,13 @@ Each row is `display:flex; min-height:64px` with two parts:
 
 - 16×16 circle at `top:16px; left:x−8`
 - `border: 3px solid <line color>; background: --paper`
-- **Terminal station:** a 22×22 circle filled with the trunk color, with a 3px `--paper` inner ring (`box-shadow: inset 0 0 0 3px var(--paper)`), at `top:13px; left:x−11`. Every lane ends at 24 px in this row.
+- **Terminal station:** a 24×24 circle filled with the trunk color, with a 3px `--paper` inner ring (`box-shadow: inset 0 0 0 3px var(--paper)`), at `top:12px; left:x−12`. Every lane ends at 24 px in this row.
 
 **Wait (broken line).** A wait (§5.4 step 8) is drawn as its own row after the row it follows, like an axis break on a chart: time is compressed here.
 
-- The row has `min-height: 44px`, content vertically centered.
-- Each live lane draws a segment from 0 to 14 px, a gap, then a segment from 30 px to the bottom. Both are in the lane's style at the wait's start (normally dashed).
-- Two slashes sit in the gap, 14×3 px each, rotated −30°, in the lane color, centered on the lane at `top: 16px` and `top: 23px`.
+- The row has `min-height: 48px`, content vertically centered.
+- Each live lane draws a segment from 0 to 16 px, a gap, then a segment from 32 px to the bottom. Both are in the lane's style at the wait's start (normally dashed).
+- Two slashes sit in the gap, 14×3 px each, rotated −30°, in the lane color, centered on the lane at `top: 18px` and `top: 26px`.
 - Label: `Wait ~1h 45m` in `--text-num`, `--ink-2`.
 
 **Content**
@@ -366,14 +375,14 @@ Each row is `display:flex; min-height:64px` with two parts:
    - **Timecode:** elapsed `h:mm` (`0:20`, `1:05`), `--text-num`, `--ink-2`. Timecodes are sums of estimates and are always approximate. The `~` in the eyebrow covers them, so they don't repeat `~` on every row.
    - **Station title:** `--text-station`.
    - **Duration** (§6.4). Omitted on the terminal station.
-2. **Chips** (flex-wrap, gap 6px), one per added ingredient and per merged component:
-   - Style: `--text-chip`, background `--paper-raised`, 1px `--rule` border, `--radius-chip`, padding `2px 8px`.
+2. **Chips** (flex-wrap, gap 8px), one per added ingredient and per merged component:
+   - Style: `--text-small` on a 22px line, so the chip is 24px tall with its 1px `--rule` border; background `--paper-raised`, `--radius-sm`, padding `0 8px`.
    - Ingredient: `{name}` in `--ink-1`, then ` {qty}{, prep}` in `--ink-2`, e.g. `garlic 4 cloves, minced`.
    - Merged component: `+ {outputName ?? name}`.
    - The `+ ` prefix is used on every station except a component's first, where the ingredients _start_ the line.
    - The terminal station shows no merge chips.
 3. **Meanwhile callout** (when the station hosts prep):
-   - Container: `--paper-raised` background, `--radius-card`, padding `8px 12px`, and a 3px left border in `--ink-3`.
+   - Container: `--paper-raised` background, `--radius-sm`, padding `8px 16px`, and a 4px left border in `--ink-3`.
    - Text (`--text-body`): **Meanwhile** in bold, followed by `: mince garlic, grate ginger`.
    - With free time: **Meanwhile** · 11 free min: juice lime, chop cilantro.
    - Prep items are lowercase action + name.

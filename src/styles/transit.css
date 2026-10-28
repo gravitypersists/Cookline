@@ -1,10 +1,10 @@
-/* Transit map view (SPEC §6.2–6.5). Lane geometry is computed in
-   src/layout/geometry.ts and applied inline. */
+/* Transit map view (SPEC §6.2–6.5), on the 8pt grid. Lane geometry is
+   computed in src/layout/geometry.ts and applied inline. */
 
 .map-header {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--s1);
 }
 
 .map-title {
@@ -17,21 +17,21 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  margin: 0 calc(-1 * var(--space-4));
-  padding: calc(var(--space-3) + env(safe-area-inset-top)) var(--space-4) var(--space-3);
+  margin: 0 calc(-1 * var(--s2));
+  padding: calc(var(--s1) + env(safe-area-inset-top)) var(--s2) var(--s1);
   background: var(--paper);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-4);
+  column-gap: var(--s2);
   border-bottom: 1px solid var(--rule);
 }
 
 .legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 32px;
+  gap: var(--s1);
+  min-height: var(--s4);
   padding: 0;
   border: 0;
   background: none;
@@ -48,7 +48,7 @@ button.legend-item {
 
 .legend-swatch {
   width: 4px;
-  height: 16px;
+  height: var(--s2);
   border-radius: 2px;
 }
 
@@ -63,7 +63,7 @@ button.legend-item {
 
 .row {
   display: flex;
-  min-height: 64px;
+  min-height: var(--s8);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -84,6 +84,7 @@ button.legend-item {
   width: 4px;
 }
 
+/* Centered on the dot line (24px). */
 .bar {
   top: 22px;
   height: 4px;
@@ -91,18 +92,18 @@ button.legend-item {
 }
 
 .dot {
-  top: 16px;
-  width: 16px;
-  height: 16px;
+  top: var(--s2);
+  width: var(--s2);
+  height: var(--s2);
   border-radius: 50%;
   border: 3px solid;
   background: var(--paper);
 }
 
 .dot.terminal {
-  top: 13px;
-  width: 22px;
-  height: 22px;
+  top: 12px;
+  width: var(--s3);
+  height: var(--s3);
   border: 0;
   box-shadow: inset 0 0 0 3px var(--paper);
 }
@@ -111,20 +112,22 @@ button.legend-item {
   opacity: 0.25;
 }
 
+/* The 32px heading line is centered on the dot (8 + 16 = 24). */
 .content {
   flex: 1;
   min-width: 0;
-  padding: var(--space-3) 0 var(--space-4);
+  padding: var(--s1) 0 var(--s2);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--s1);
 }
 
 .heading {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  column-gap: var(--space-2);
+  column-gap: var(--s1);
+  line-height: var(--s4);
 }
 
 .timecode,
@@ -137,33 +140,36 @@ button.legend-item {
 .duration.exact {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--s-half);
   align-self: center;
   font-weight: 700;
   color: var(--ink-1);
 }
 
 .duration.exact svg {
-  width: 16px;
-  height: 16px;
+  width: var(--s2);
+  height: var(--s2);
 }
 
 .station-title {
   font: var(--text-station);
+  line-height: var(--s4);
 }
 
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s1);
 }
 
+/* 24px tall: a 22px line plus the 1px border. */
 .chip {
-  font: var(--text-chip);
+  font: var(--text-small);
+  line-height: 22px;
   background: var(--paper-raised);
   border: 1px solid var(--rule);
-  border-radius: var(--radius-chip);
-  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  padding: 0 var(--s1);
 }
 
 .chip-secondary {
@@ -172,15 +178,15 @@ button.legend-item {
 
 .meanwhile {
   background: var(--paper-raised);
-  border-radius: var(--radius-card);
-  border-left: 3px solid var(--ink-3);
-  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--ink-3);
+  padding: var(--s1) var(--s2);
 }
 
 .details {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--s1);
   color: var(--ink-2);
 }
 
@@ -195,7 +201,7 @@ button.legend-item {
 .break-row {
   display: flex;
   align-items: center;
-  min-height: 44px;
+  min-height: var(--s6);
 }
 
 .break-row .gutter {

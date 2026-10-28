@@ -5,8 +5,6 @@ import { costLabel, costSentence, estimateCost } from "../extract/cost";
 import { ShareKey } from "./ShareKey";
 import { ThemeSwitch } from "./ThemeSwitch";
 
-const price = (m: ModelInfo) => `$${m.promptPerM.toFixed(2)} in / $${m.completionPerM.toFixed(2)} out per M tokens`;
-
 // Recommended first, then cheapest per photo (the usual way in).
 function byCost(models: ModelInfo[]): ModelInfo[] {
   return [...models].sort(
@@ -16,8 +14,22 @@ function byCost(models: ModelInfo[]): ModelInfo[] {
   );
 }
 
-const optionLabel = (m: ModelInfo) =>
-  `${m.name}${m.id === RECOMMENDED_MODEL ? " (recommended)" : ""} · ${costLabel(estimateCost(m))}`;
+// OpenRouter names read "Provider: Model"; the provider becomes the group.
+const provider = (m: ModelInfo) => (m.name.includes(": ") ? m.name.split(": ")[0]! : "Other");
+const shortName = (m: ModelInfo) => (m.name.includes(": ") ? m.name.slice(m.name.indexOf(": ") + 2) : m.name);
+const optionLabel = (m: ModelInfo) => `${shortName(m)} · ${costLabel(estimateCost(m))}`;
+
+// Recommended first, then one group per provider (alphabetical), cheapest first.
+function groupModels(models: ModelInfo[]): [string, ModelInfo[]][] {
+  const groups = new Map<string, ModelInfo[]>();
+  for (const m of models) {
+    const g = m.id === RECOMMENDED_MODEL ? "Recommended" : provider(m);
+    groups.set(g, [...(groups.get(g) ?? []), m]);
+  }
+  return [...groups.entries()].sort(([a], [b]) =>
+    a === "Recommended" ? -1 : b === "Recommended" ? 1 : a.localeCompare(b),
+  );
+}
 
 export function Settings() {
   const [key, setKey] = useState(getApiKey);
@@ -84,18 +96,16 @@ export function Settings() {
     onInput: (e: Event) => saveKey((e.target as HTMLInputElement).value),
   };
 
-  const options = models && !models.some((m) => m.id === model) ? [{ id: model, name: model } as ModelInfo, ...models] : models;
+  const options = models;
   const selected = models?.find((m) => m.id === model);
 
   return (
     <main class="page">
-      <header class="map-header">
-        <h1 class="map-title">Settings</h1>
-      </header>
+      <h1 class="map-title">Settings</h1>
 
-      <section class="section">
-        <label class="label" for="key">
-          OpenRouter API key
+      <section class="panel">
+        <label class="panel-title" for="key">
+          OpenRouter key
         </label>
         <div class="field-row">
           {showKey ? <input type="text" {...keyInput} /> : <input type="password" {...keyInput} />}
@@ -112,22 +122,31 @@ export function Settings() {
               {confirmClear ? "Tap again to clear" : "Clear key"}
             </button>
           )}
-          {keyStatus && <span class={keyStatus.ok ? "note" : "note error"}>{keyStatus.text}</span>}
         </div>
+        {keyStatus && (
+          <p class={keyStatus.ok ? "note" : "note error"} role="status">
+            {keyStatus.text}
+          </p>
+        )}
         <p class="note">
-          Stored only on this device. It's sent to openrouter.ai to read recipes, and nowhere else unless you create
-          a share link below. You pay OpenRouter per recipe read (a fraction of a cent with the recommended model).
+          Stored only on this device. It's sent to openrouter.ai to read recipes, and nowhere else unless you create a
+          share link below.
         </p>
       </section>
 
-      <section class="section">
-        <label class="label" for="model">
+      <section class="panel">
+        <label class="panel-title" for="model">
           Model
         </label>
         {options ? (
           <select id="model" class="select" value={model} onChange={(e) => chooseModel((e.target as HTMLSelectElement).value)}>
-            {options.map((m) => (
-              <option value={m.id}>{m.promptPerM === undefined ? m.name : optionLabel(m)}</option>
+            {!selected && <option value={model}>{model}</option>}
+            {groupModels(options).map(([group, ms]) => (
+              <optgroup label={group}>
+                {ms.map((m) => (
+                  <option value={m.id}>{optionLabel(m)}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
         ) : (
@@ -139,18 +158,16 @@ export function Settings() {
             onInput={(e) => chooseModel((e.target as HTMLInputElement).value)}
           />
         )}
-        {selected && (
-          <p class="note">
-            {costSentence(estimateCost(selected))} A second pass to fix mistakes, when needed, roughly doubles it.
-          </p>
-        )}
+        {selected && <p class="cost">{costSentence(estimateCost(selected))}</p>}
         <p class="note">
-          {selected ? price(selected) : "Only models that can read photos and follow a JSON schema are listed."}
+          {selected
+            ? "Paid to OpenRouter per recipe read. A second pass to fix mistakes, when needed, roughly doubles it."
+            : "Only models that can read photos and follow a JSON schema are listed."}
           {model !== RECOMMENDED_MODEL && (
             <>
-              {" · "}
+              {" "}
               <button type="button" class="text-button" onClick={() => chooseModel(RECOMMENDED_MODEL)}>
-                Use recommended
+                Use the recommended model
               </button>
             </>
           )}
@@ -159,8 +176,8 @@ export function Settings() {
 
       <ShareKey apiKey={key} />
 
-      <section class="section">
-        <span class="label">Theme</span>
+      <section class="panel">
+        <span class="panel-title">Appearance</span>
         <ThemeSwitch />
       </section>
     </main>

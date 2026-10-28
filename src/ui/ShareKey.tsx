@@ -43,8 +43,8 @@ export function ShareKey({ apiKey }: { apiKey: string }) {
   const creating = state.kind === "creating";
 
   return (
-    <section class="section">
-      <span class="label">Share Cookline</span>
+    <section class="panel">
+      <span class="panel-title">Share Cookline</span>
       <p class="note">
         Creates a link that sets Cookline up on someone else's phone. The key is encrypted on this device before it
         goes to{" "}

@@ -25,9 +25,9 @@ export function BreakRow({ wait, lanes, highlight }: Props) {
           const background = lineBackground(lane, seg.style);
           return (
             <>
-              <div class={`seg ${dimmed(seg.lane)}`} style={{ left, top: 0, height: "14px", background }} />
-              <div class={`seg ${dimmed(seg.lane)}`} style={{ left, top: "30px", bottom: 0, background }} />
-              {[16, 23].map((top) => (
+              <div class={`seg ${dimmed(seg.lane)}`} style={{ left, top: 0, height: "16px", background }} />
+              <div class={`seg ${dimmed(seg.lane)}`} style={{ left, top: "32px", bottom: 0, background }} />
+              {[18, 26].map((top) => (
                 <div
                   class={`slash ${dimmed(seg.lane)}`}
                   style={{ left: `${laneX(seg.lane) - 7}px`, top: `${top}px`, background: `var(--line-${lane.slot})` }}

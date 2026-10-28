@@ -1,3 +1,5 @@
+/* App chrome on the 8pt grid (SPEC §6.1). */
+
 *,
 *::before,
 *::after {
@@ -21,9 +23,19 @@ button {
   color: inherit;
 }
 
+a {
+  color: var(--ink-1);
+}
+
 :focus-visible {
   outline: 2px solid var(--ink-1);
   outline-offset: 2px;
+}
+
+svg.icon {
+  width: 24px;
+  height: 24px;
+  flex: none;
 }
 
 .label {
@@ -33,42 +45,47 @@ button {
   color: var(--ink-2);
 }
 
+/* Layout */
+
 .page {
   max-width: 640px;
   margin: 0 auto;
-  padding: var(--space-5) var(--space-4) var(--space-7);
+  padding: var(--s3) var(--s2) var(--s6);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--s3);
 }
 
-.segmented {
-  display: inline-flex;
-  align-self: flex-start;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-card);
-  overflow: hidden;
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
 }
 
-.segmented button {
-  min-height: var(--tap);
-  min-width: var(--tap);
-  padding: 0 var(--space-3);
-  border: 0;
-  background: transparent;
-  font: var(--text-chip);
-  cursor: pointer;
+.section h2 {
+  margin: 0;
 }
 
-.segmented button[aria-pressed="true"] {
-  background: var(--ink-1);
-  color: var(--paper);
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
 }
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s1);
+}
+
+/* Top bar */
 
 .topbar {
   max-width: 640px;
   margin: 0 auto;
-  padding: env(safe-area-inset-top) var(--space-2) 0;
+  min-height: var(--s6);
+  padding: env(safe-area-inset-top) var(--s1) 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -76,53 +93,79 @@ button {
 
 .topbar-actions {
   display: flex;
-  gap: var(--space-1);
+}
+
+.topbar-link,
+.topbar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-half);
+  min-height: var(--tap);
+  padding: 0 var(--s1);
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: var(--text-small);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .topbar-button {
-  min-height: var(--tap);
-  padding: 0 var(--space-2);
-  border: 0;
-  background: none;
   color: var(--ink-1);
-  font: var(--text-chip);
-  font-weight: 700;
-  cursor: pointer;
 }
 
 .topbar-button:disabled {
   color: var(--ink-2);
 }
 
-.topbar a {
+.icon-button {
   display: inline-flex;
   align-items: center;
-  min-height: var(--tap);
-  padding: 0 var(--space-2);
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  margin-right: calc(-1 * var(--s1));
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
   color: var(--ink-2);
-  font: var(--text-chip);
-  text-decoration: none;
+  cursor: pointer;
 }
 
 /* A page's own top padding sits under the top bar. */
 .topbar + .page,
 .topbar + .export-root > .page {
-  padding-top: var(--space-2);
+  padding-top: var(--s1);
 }
 
-a {
-  color: var(--ink-1);
-}
+/* Library header */
 
-.section {
+.app-header {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--s2);
 }
 
-.section h2 {
-  margin: 0;
+.app-header .brand {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
 }
+
+.app-title {
+  margin: 0;
+  font: var(--text-display);
+  letter-spacing: -0.01em;
+}
+
+.tagline {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+/* Cards and lists */
 
 .list {
   list-style: none;
@@ -130,29 +173,75 @@ a {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--s1);
 }
 
 .card {
   background: var(--paper-raised);
   border: 1px solid var(--rule);
-  border-radius: var(--radius-card);
-  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  padding: var(--s2);
 }
 
-.link-card.recipe-card {
+.link-card {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: var(--s8);
+  padding-block: var(--s1);
+  text-decoration: none;
+}
+
+.link-card:active {
+  background: var(--paper);
+}
+
+.link-card .text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
   flex-direction: column;
-  align-items: flex-start;
+}
+
+.link-card .title {
+  font: var(--text-station);
+}
+
+.link-card .chevron {
+  color: var(--ink-3);
+}
+
+/* A recipe's lines in miniature, as on its legend. */
+.glyph {
+  flex: none;
+  display: flex;
+  gap: var(--s-half);
+  align-items: flex-end;
+  width: var(--s4);
+  height: var(--s4);
   justify-content: center;
-  gap: 2px;
-  padding-block: var(--space-2);
+}
+
+.glyph span {
+  width: 4px;
+  height: var(--s3);
+  border-radius: 2px;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--s2);
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius-md);
+  color: var(--ink-2);
+  font: var(--text-small);
 }
 
 .examples summary {
   min-height: var(--tap);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s1);
   cursor: pointer;
   list-style: none;
 }
@@ -171,39 +260,44 @@ a {
   transform: rotate(90deg);
 }
 
-.link-card {
+.examples[open] summary {
+  margin-bottom: var(--s1);
+}
+
+/* Settings panels */
+
+.panel {
   display: flex;
-  align-items: center;
-  min-height: var(--tap);
-  text-decoration: none;
-  font: var(--text-station);
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s2);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
 }
 
-.error-card {
-  border-color: var(--line-1);
+.panel-title {
+  margin: 0;
+  font: var(--text-heading);
 }
 
-.error-card p,
-.error-card ul {
-  margin: 0 0 var(--space-2);
+.panel .input,
+.panel .select {
+  background: var(--paper);
 }
 
-.error-card pre {
-  white-space: pre-wrap;
-  word-break: break-all;
-  font: 400 12px/16px var(--font-num);
-  color: var(--ink-2);
-}
+/* Controls */
 
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--s1);
   min-height: var(--tap);
-  padding: 0 var(--space-4);
+  padding: 0 var(--s2);
   border: 1px solid var(--rule);
-  border-radius: var(--radius-card);
-  background: transparent;
+  border-radius: var(--radius-md);
+  background: var(--paper-raised);
   color: var(--ink-1);
   font: var(--text-station);
   text-decoration: none;
@@ -214,6 +308,10 @@ a {
   background: var(--ink-1);
   border-color: var(--ink-1);
   color: var(--paper);
+}
+
+.button.wide {
+  width: 100%;
 }
 
 .button:disabled {
@@ -231,23 +329,48 @@ a {
   cursor: pointer;
 }
 
-.field-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+.segmented {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: var(--s-half);
+  gap: var(--s-half);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+}
+
+.segmented button {
+  min-height: var(--s5);
+  min-width: var(--s6);
+  padding: 0 var(--s2);
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  font: var(--text-small);
+  font-weight: 700;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--ink-1);
+  color: var(--paper);
 }
 
 .input,
 .select {
   min-height: var(--tap);
-  padding: 0 var(--space-3);
+  padding: 0 var(--s2);
   border: 1px solid var(--rule);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-md);
   background: var(--paper-raised);
   color: var(--ink-1);
   font: var(--text-body);
   max-width: 100%;
+}
+
+.select {
+  width: 100%;
 }
 
 .field-row .input {
@@ -256,15 +379,17 @@ a {
 }
 
 .textarea {
-  min-height: 240px;
-  padding: var(--space-3);
+  min-height: calc(var(--s8) * 4);
+  padding: var(--s2);
   resize: vertical;
 }
+
+/* Text */
 
 .note {
   margin: 0;
   color: var(--ink-2);
-  font: var(--text-chip);
+  font: var(--text-small);
 }
 
 .note.error {
@@ -272,12 +397,47 @@ a {
 }
 
 ul.note {
-  padding-left: var(--space-4);
+  padding-left: var(--s2);
 }
 
 .status {
   margin: 0;
   font: var(--text-station);
+}
+
+.cost {
+  margin: 0;
+  font: var(--text-station);
+}
+
+/* Capture */
+
+.capture-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s1);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s1);
+  min-height: calc(var(--s8) * 2);
+  padding: var(--s2);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  font: var(--text-station);
+  text-align: center;
+  cursor: pointer;
+}
+
+.tile svg.icon {
+  width: var(--s4);
+  height: var(--s4);
+  color: var(--ink-2);
 }
 
 .thumbs {
@@ -286,7 +446,7 @@ ul.note {
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: var(--space-2);
+  gap: var(--s1);
 }
 
 .thumbs li {
@@ -298,7 +458,7 @@ ul.note {
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  border-radius: var(--radius-chip);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--rule);
 }
 
@@ -311,9 +471,25 @@ ul.note {
   border: 0;
   background: none;
   color: var(--paper);
-  text-shadow: 0 0 3px #000;
-  font-size: 18px;
+  text-shadow: 0 0 4px #000;
+  font-size: 16px;
   cursor: pointer;
+}
+
+.error-card {
+  border-color: var(--line-1);
+}
+
+.error-card p,
+.error-card ul {
+  margin: 0 0 var(--s1);
+}
+
+.error-card pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  font: 400 12px/16px var(--font-num);
+  color: var(--ink-2);
 }
 
 .meta {
