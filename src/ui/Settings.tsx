@@ -142,6 +142,13 @@ export function Settings() {
           Stored only on this device. It's sent to openrouter.ai to read recipes, and nowhere else unless you create a
           share link below.
         </p>
+        <p class="note">
+          Only OpenRouter keys are supported for now. To add keys from other providers,{" "}
+          <a href="https://github.com/gravitypersists/Cookline" target="_blank" rel="noreferrer">
+            contributions are welcome on GitHub
+          </a>
+          .
+        </p>
       </section>
 
       <section class="panel">
