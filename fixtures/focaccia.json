@@ -1,0 +1,57 @@
+{
+  "title": "Rosemary garlic focaccia",
+  "servings": "1 pan",
+  "trunk": "dough",
+  "ingredients": [
+    { "id": "flour", "name": "bread flour", "qty": "500 g" },
+    { "id": "water", "name": "warm water", "qty": "400 g" },
+    { "id": "yeast", "name": "instant yeast", "qty": "7 g" },
+    { "id": "salt", "name": "salt", "qty": "10 g" },
+    { "id": "pan-oil", "name": "olive oil", "qty": "3 tbsp" },
+    { "id": "infuse-oil", "name": "olive oil", "qty": "¼ c" },
+    { "id": "garlic", "name": "garlic", "qty": "4 cloves",
+      "prep": { "verb": "slice", "done": "sliced", "duration": { "min": 2, "basis": "estimated" } } },
+    { "id": "rosemary", "name": "rosemary", "qty": "2 sprigs",
+      "prep": { "verb": "strip", "done": "leaves stripped", "duration": { "min": 2, "basis": "estimated" } } },
+    { "id": "flaky-salt", "name": "flaky salt", "qty": "1 tsp" }
+  ],
+  "components": [
+    {
+      "id": "garlic-oil",
+      "name": "Garlic oil",
+      "outputName": "garlic oil",
+      "stations": [
+        { "id": "warm-oil", "title": "Warm garlic in oil", "attention": "tending",
+          "duration": { "min": 5, "basis": "stated", "quote": "about 5 minutes" },
+          "adds": ["infuse-oil", "garlic", "rosemary"], "merges": [], "cue": "until the garlic is just golden" },
+        { "id": "steep", "title": "Steep off heat", "attention": "passive",
+          "duration": { "min": 20, "basis": "estimated" }, "adds": [], "merges": [] }
+      ]
+    },
+    {
+      "id": "dough",
+      "name": "Dough",
+      "stations": [
+        { "id": "mix", "title": "Mix dough", "attention": "active",
+          "duration": { "min": 5, "basis": "estimated" },
+          "adds": ["flour", "water", "yeast", "salt"], "merges": [], "cue": "until no dry flour remains" },
+        { "id": "rise", "title": "First rise", "attention": "passive",
+          "duration": { "min": 90, "max": 120, "basis": "stated", "quote": "1½ to 2 hours" },
+          "adds": [], "merges": [], "cue": "until doubled" },
+        { "id": "pan", "title": "Stretch into pan", "attention": "active",
+          "duration": { "min": 5, "basis": "estimated" }, "adds": ["pan-oil"], "merges": [] },
+        { "id": "proof", "title": "Second rise", "attention": "passive",
+          "duration": { "min": 30, "max": 45, "basis": "stated", "quote": "30 to 45 minutes" },
+          "adds": [], "merges": [], "cue": "until puffy and jiggly" },
+        { "id": "dimple", "title": "Dimple & top", "attention": "active",
+          "duration": { "min": 3, "basis": "estimated" },
+          "adds": ["flaky-salt"], "merges": ["garlic-oil"] },
+        { "id": "bake", "title": "Bake at 450°F", "attention": "passive",
+          "duration": { "min": 20, "max": 25, "basis": "stated", "quote": "20 to 25 minutes" },
+          "adds": [], "merges": [], "cue": "until deep golden" },
+        { "id": "cool", "title": "Cool, slice", "attention": "passive",
+          "duration": { "min": 10, "basis": "stated", "quote": "10 minutes" }, "adds": [], "merges": [] }
+      ]
+    }
+  ]
+}

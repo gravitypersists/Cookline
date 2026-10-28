@@ -12,7 +12,7 @@ interface Props {
   highlight: string | null;
 }
 
-function lineBackground(lane: Lane, style: Segment["style"]): string {
+export function lineBackground(lane: Lane, style: Segment["style"]): string {
   const color = `var(--line-${lane.slot})`;
   if (style === "solid") return color;
   const [on, off] = lane.alt ? [3, 7] : [6, 11];
@@ -46,7 +46,6 @@ export function StationRow({ row, lanes, expanded, onToggle, highlight }: Props)
             style={{
               left: `${laneX(seg.lane) - LINE_WIDTH / 2}px`,
               top: seg.from === "dot" ? `${DOT_CENTER}px` : "0",
-              // A segment never runs dot to dot, so an ending segment always starts at the top.
               ...(seg.to === "dot" ? { height: `${DOT_CENTER}px` } : { bottom: "0" }),
               background: lineBackground(lanes[seg.lane]!, seg.style),
             }}

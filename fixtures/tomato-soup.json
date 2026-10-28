@@ -1,0 +1,39 @@
+{
+  "title": "Tomato soup",
+  "servings": "4",
+  "trunk": "soup",
+  "ingredients": [
+    { "id": "onion", "name": "onion", "qty": "1" },
+    { "id": "butter", "name": "butter", "qty": "3 tbsp" },
+    { "id": "garlic", "name": "garlic", "qty": "3 cloves",
+      "prep": { "verb": "smash", "done": "smashed", "duration": { "min": 1, "basis": "estimated" } } },
+    { "id": "tomatoes", "name": "whole tomatoes", "qty": "28 oz can" },
+    { "id": "stock", "name": "stock", "qty": "2 c" },
+    { "id": "cream", "name": "cream", "qty": "½ c" },
+    { "id": "basil", "name": "basil", "qty": "a handful",
+      "prep": { "verb": "tear", "done": "torn", "duration": { "min": 1, "basis": "estimated" } } },
+    { "id": "salt", "name": "salt", "qty": "to taste" }
+  ],
+  "components": [
+    {
+      "id": "soup",
+      "name": "Soup",
+      "stations": [
+        { "id": "dice-onion", "title": "Dice onion", "attention": "active",
+          "duration": { "min": 4, "basis": "estimated" }, "adds": ["onion"], "merges": [] },
+        { "id": "sweat", "title": "Sweat", "attention": "tending",
+          "duration": { "min": 8, "max": 10, "basis": "stated", "quote": "8 to 10 minutes" },
+          "adds": ["butter"], "merges": [], "cue": "until soft but not browned" },
+        { "id": "garlic", "title": "Add garlic", "attention": "active",
+          "duration": { "min": 1, "basis": "stated", "quote": "1 minute" }, "adds": ["garlic"], "merges": [] },
+        { "id": "simmer", "title": "Simmer", "attention": "passive",
+          "duration": { "min": 20, "basis": "stated", "quote": "20 minutes" },
+          "adds": ["tomatoes", "stock"], "merges": [] },
+        { "id": "blend", "title": "Blend", "attention": "active",
+          "duration": { "min": 3, "basis": "estimated" }, "adds": [], "merges": [], "cue": "until smooth" },
+        { "id": "finish", "title": "Finish", "attention": "active",
+          "duration": { "min": 1, "basis": "estimated" }, "adds": ["cream", "basil", "salt"], "merges": [] }
+      ]
+    }
+  ]
+}

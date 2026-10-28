@@ -3,6 +3,7 @@ import { assignLanes, mergeTargets, type Lane } from "./lanes";
 
 export type LineStyle = "solid" | "dashed";
 
+// Half a row of one lane: top → dot center, or dot center → bottom.
 export interface Segment {
   lane: number;
   from: "top" | "dot";
@@ -33,12 +34,19 @@ export interface RowModel {
   meanwhile?: { items: string[]; freeMinutes?: number };
 }
 
+// A long wait drawn after a row as a broken line through every live lane.
+export interface BreakModel {
+  minutes: number;
+  segments: { lane: number; style: LineStyle }[];
+}
+
 export interface MapModel {
   title: string;
   servings?: string;
   total: number;
   lanes: Lane[];
   rows: RowModel[];
+  breaks: Record<string, BreakModel>; // keyed by the station id of the row they follow
 }
 
 // Pure: (graph, schedule) → everything the view draws. No geometry decisions
@@ -85,11 +93,12 @@ export function buildMap(graph: RecipeGraph, schedule: Schedule): MapModel {
       const target = targets.get(comp.id);
       if (row === end && target) mergeBars.push({ from: lane, to: laneOf.get(target.componentId)! });
       if (first === end) continue;
-      const from = row === first ? "dot" : "top";
-      const to = row === end ? "dot" : "bottom";
-      // The top half of an ending row continues the line from the row above.
-      const tStyle = to === "dot" ? at(ordered[row - 1]!.s.id).start : t;
-      segments.push({ lane, from, to, style: styleAt(comp, tStyle) });
+      // Above the dot is the run-up to this row (the state since the row above);
+      // below it is what happens from this row on.
+      if (row > first) {
+        segments.push({ lane, from: "top", to: "dot", style: styleAt(comp, at(ordered[row - 1]!.s.id).start) });
+      }
+      if (row < end) segments.push({ lane, from: "dot", to: "bottom", style: styleAt(comp, t) });
     }
 
     const terminal = s.id === terminalId;
@@ -98,6 +107,11 @@ export function buildMap(graph: RecipeGraph, schedule: Schedule): MapModel {
       ...(terminal ? [] : s.merges).map((m) => {
         const mc = components.get(m)!;
         return { label: mc.outputName ?? mc.name, plus: true };
+      }),
+      // An inserted "Prep" station lists its items; a single item is already its title.
+      ...(s.prepFor && s.prepFor.length > 1 ? s.prepFor : []).map((id) => {
+        const ing = ingredients.get(id)!;
+        return { label: `${ing.prep!.verb} ${ing.name}`, plus: false };
       }),
       ...s.adds.map((id) => {
         const ing = ingredients.get(id)!;
@@ -128,5 +142,19 @@ export function buildMap(graph: RecipeGraph, schedule: Schedule): MapModel {
     };
   });
 
-  return { title: graph.title, servings: graph.servings, total: schedule.total, lanes, rows };
+  const breaks: MapModel["breaks"] = {};
+  for (const w of schedule.waits) {
+    const row = rowOf.get(w.after)!;
+    breaks[w.after] = {
+      minutes: w.minutes,
+      segments: graph.components
+        .filter((comp) => {
+          const { first, end } = span.get(comp.id)!;
+          return first <= row && row < end;
+        })
+        .map((comp) => ({ lane: laneOf.get(comp.id)!, style: styleAt(comp, w.start) })),
+    };
+  }
+
+  return { title: graph.title, servings: graph.servings, total: schedule.total, lanes, rows, breaks };
 }

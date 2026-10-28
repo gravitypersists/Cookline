@@ -1,0 +1,52 @@
+{
+  "title": "Orecchiette with sausage & greens",
+  "servings": "4",
+  "trunk": "sauce",
+  "ingredients": [
+    { "id": "water", "name": "water", "qty": "4 qt" },
+    { "id": "pasta-salt", "name": "salt", "qty": "2 tbsp" },
+    { "id": "pasta", "name": "orecchiette", "qty": "1 lb" },
+    { "id": "sausage", "name": "Italian sausage", "qty": "1 lb" },
+    { "id": "oil", "name": "olive oil", "qty": "2 tbsp" },
+    { "id": "garlic", "name": "garlic", "qty": "4 cloves",
+      "prep": { "verb": "slice", "done": "sliced", "duration": { "min": 2, "basis": "estimated" } } },
+    { "id": "chili", "name": "chili flakes", "qty": "½ tsp" },
+    { "id": "kale", "name": "kale", "qty": "1 bunch",
+      "prep": { "verb": "strip and chop", "done": "chopped", "duration": { "min": 4, "basis": "estimated" } } },
+    { "id": "pasta-water", "name": "pasta water", "qty": "½ c" },
+    { "id": "parmesan", "name": "parmesan", "qty": "½ c",
+      "prep": { "verb": "grate", "done": "grated", "duration": { "min": 2, "basis": "estimated" } } }
+  ],
+  "components": [
+    {
+      "id": "pasta",
+      "name": "Pasta",
+      "outputName": "pasta",
+      "stations": [
+        { "id": "boil-water", "title": "Boil water", "attention": "passive",
+          "duration": { "min": 12, "basis": "estimated" }, "adds": ["water", "pasta-salt"], "merges": [] },
+        { "id": "cook-pasta", "title": "Cook pasta", "attention": "tending",
+          "duration": { "min": 9, "max": 11, "basis": "stated", "quote": "9 to 11 minutes" },
+          "adds": ["pasta"], "merges": [], "cue": "until just al dente" }
+      ]
+    },
+    {
+      "id": "sauce",
+      "name": "Sauce",
+      "stations": [
+        { "id": "brown", "title": "Brown sausage", "attention": "tending",
+          "duration": { "min": 6, "max": 8, "basis": "stated", "quote": "6 to 8 minutes" },
+          "adds": ["sausage", "oil"], "merges": [], "cue": "until browned and cooked through" },
+        { "id": "aromatics", "title": "Garlic & chili", "attention": "active",
+          "duration": { "min": 1, "basis": "stated", "quote": "about 1 minute" },
+          "adds": ["garlic", "chili"], "merges": [], "cue": "until fragrant" },
+        { "id": "wilt", "title": "Wilt greens", "attention": "tending",
+          "duration": { "min": 3, "max": 4, "basis": "stated", "quote": "3 to 4 minutes" },
+          "adds": ["kale"], "merges": [] },
+        { "id": "toss", "title": "Toss together", "attention": "active",
+          "duration": { "min": 2, "basis": "estimated" },
+          "adds": ["pasta-water", "parmesan"], "merges": ["pasta"], "cue": "until glossy" }
+      ]
+    }
+  ]
+}

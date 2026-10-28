@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
-import curry from "../../fixtures/curry.json";
-import currySchedule from "../../fixtures/curry.schedule.json";
-import type { RecipeGraph, Schedule } from "../model/types";
+import { fixtures } from "../../fixtures";
+import { plan } from "../schedule/plan";
 import { buildMap, type RowModel } from "./rows";
 
-const map = buildMap(curry as RecipeGraph, currySchedule as Schedule);
+const { graph, schedule } = plan(fixtures.curry!);
+const map = buildMap(graph, schedule);
 const row = (id: string) => map.rows.find((r) => r.station.id === id)!;
-const styles = (r: RowModel) => Object.fromEntries(r.segments.map((s) => [s.lane, s.style]));
+// Style of each lane from this row on (the lower half).
+const styles = (r: RowModel) =>
+  Object.fromEntries(r.segments.filter((s) => s.to === "bottom").map((s) => [s.lane, s.style]));
+// Style of each lane in the run-up to this row (the upper half).
+const runUp = (r: RowModel) =>
+  Object.fromEntries(r.segments.filter((s) => s.from === "top").map((s) => [s.lane, s.style]));
 
 // Lane indices for the curry: 0 rice, 1 eggplant, 2 sauce.
 describe("curry transit map", () => {
@@ -31,13 +36,19 @@ describe("curry transit map", () => {
   it("starts a line at its first station's dot", () => {
     expect(row("rinse-rice").segments).toContainEqual({ lane: 0, from: "dot", to: "bottom", style: "solid" });
     // Rice isn't live before its first station.
-    expect(row("salt-eggplant").segments.map((s) => s.lane)).toEqual([1]);
+    expect(new Set(row("salt-eggplant").segments.map((s) => s.lane))).toEqual(new Set([1]));
   });
 
   it("draws hands-on lines solid and waiting lines dashed", () => {
     expect(styles(row("sear-eggplant"))).toEqual({ 0: "dashed", 1: "solid", 2: "solid" });
     expect(styles(row("simmer-sauce"))).toEqual({ 0: "dashed", 2: "dashed" });
     expect(styles(row("salt-eggplant"))).toEqual({ 1: "dashed" });
+  });
+
+  it("draws the run-up to a station in the state before it", () => {
+    // Combine is hands-on, but the sauce line leading into Simmer comes from it.
+    expect(runUp(row("simmer-sauce"))[2]).toBe("solid");
+    expect(styles(row("simmer-sauce"))[2]).toBe("dashed");
   });
 
   it("ends merged lines at the dot with a bar into the target lane", () => {
@@ -48,7 +59,7 @@ describe("curry transit map", () => {
     const serve = row("serve");
     expect(serve.terminal).toBe(true);
     expect(serve.segments.every((s) => s.to === "dot")).toBe(true);
-    expect(styles(serve)).toEqual({ 0: "dashed", 2: "solid" });
+    expect(runUp(serve)).toEqual({ 0: "dashed", 2: "solid" });
     expect(serve.mergeBars).toEqual([{ from: 0, to: 2 }]);
   });
 

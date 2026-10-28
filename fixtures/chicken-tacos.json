@@ -1,0 +1,70 @@
+{
+  "title": "Chicken tacos with lime slaw",
+  "servings": "4",
+  "trunk": "tacos",
+  "ingredients": [
+    { "id": "chicken", "name": "chicken thighs", "qty": "1½ lb" },
+    { "id": "spices", "name": "chili powder & cumin", "qty": "1 tbsp each" },
+    { "id": "marinade-lime", "name": "lime juice", "qty": "2 tbsp" },
+    { "id": "sear-oil", "name": "oil", "qty": "1 tbsp" },
+    { "id": "sour-cream", "name": "sour cream", "qty": "½ c" },
+    { "id": "lime-zest", "name": "lime", "qty": "1",
+      "prep": { "verb": "zest and juice", "done": "zested & juiced", "duration": { "min": 2, "basis": "estimated" } } },
+    { "id": "cabbage", "name": "cabbage", "qty": "¼ head" },
+    { "id": "slaw-salt", "name": "salt", "qty": "a pinch" },
+    { "id": "tortillas", "name": "corn tortillas", "qty": "12" },
+    { "id": "cilantro", "name": "cilantro", "qty": "½ bunch",
+      "prep": { "verb": "chop", "done": "chopped", "duration": { "min": 2, "basis": "estimated" } } }
+  ],
+  "components": [
+    {
+      "id": "chicken",
+      "name": "Chicken",
+      "outputName": "sliced chicken",
+      "stations": [
+        { "id": "marinate", "title": "Marinate", "attention": "passive",
+          "duration": { "min": 30, "basis": "stated", "quote": "at least 30 minutes" },
+          "adds": ["chicken", "spices", "marinade-lime"], "merges": [] },
+        { "id": "sear", "title": "Sear", "attention": "tending",
+          "duration": { "min": 10, "max": 12, "basis": "stated", "quote": "10 to 12 minutes" },
+          "adds": ["sear-oil"], "merges": [], "cue": "until charred and cooked through" },
+        { "id": "rest", "title": "Rest", "attention": "passive",
+          "duration": { "min": 5, "basis": "stated", "quote": "5 minutes" }, "adds": [], "merges": [] },
+        { "id": "slice", "title": "Slice", "attention": "active",
+          "duration": { "min": 2, "basis": "estimated" }, "adds": [], "merges": [] }
+      ]
+    },
+    {
+      "id": "crema",
+      "name": "Crema",
+      "outputName": "lime crema",
+      "stations": [
+        { "id": "whisk-crema", "title": "Whisk crema", "attention": "active",
+          "duration": { "min": 1, "basis": "estimated" }, "adds": ["sour-cream", "lime-zest"], "merges": [] }
+      ]
+    },
+    {
+      "id": "slaw",
+      "name": "Slaw",
+      "outputName": "slaw",
+      "stations": [
+        { "id": "shred", "title": "Shred cabbage", "attention": "active",
+          "duration": { "min": 4, "basis": "estimated" }, "adds": ["cabbage"], "merges": [] },
+        { "id": "dress", "title": "Dress", "attention": "active",
+          "duration": { "min": 1, "basis": "estimated" }, "adds": ["slaw-salt"], "merges": ["crema"] },
+        { "id": "sit", "title": "Let sit", "attention": "passive",
+          "duration": { "min": 10, "basis": "estimated" }, "adds": [], "merges": [], "cue": "until slightly wilted" }
+      ]
+    },
+    {
+      "id": "tacos",
+      "name": "Tacos",
+      "stations": [
+        { "id": "warm", "title": "Warm tortillas", "attention": "tending",
+          "duration": { "min": 3, "basis": "estimated" }, "adds": ["tortillas"], "merges": [], "cue": "until pliable and spotted" },
+        { "id": "assemble", "title": "Assemble", "attention": "active",
+          "duration": { "min": 3, "basis": "estimated" }, "adds": ["cilantro"], "merges": ["chicken", "slaw"] }
+      ]
+    }
+  ]
+}

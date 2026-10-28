@@ -191,3 +191,28 @@ button.legend-item {
 .details .source {
   font-style: italic;
 }
+
+.break-row {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.break-row .gutter {
+  align-self: stretch;
+}
+
+.slash {
+  position: absolute;
+  width: 14px;
+  height: 3px;
+  border-radius: 1.5px;
+  transform: rotate(-30deg);
+  transition: opacity 150ms ease;
+}
+
+.break-label {
+  font: var(--text-num);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}

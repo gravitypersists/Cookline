@@ -154,6 +154,7 @@ Scheduling uses the midpoint of `min` and `max` (rounded up to whole minutes). D
 interface Schedule {
   stations: Record<StationId, { start: number; end: number; order: number }>;
   meanwhile: Record<StationId, { prepIds: string[]; freeMinutes?: number }>;
+  waits: { after: StationId; start: number; minutes: number }[]; // long hands-free stretches (§5.4 step 8)
   total: number;               // minutes, end of terminal station
 }
 ```
@@ -185,15 +186,18 @@ The model is one cook. Components run in parallel, but **active** stations and p
    - **plus a bonus for unlocking waiting time:** if the station's next station is passive, add that passive duration to the priority. This makes the scheduler get long walk-away steps going early (rinse the rice so it can simmer while you dice), which is how a cook would order them.
    - Remaining ties go to component order.
 
-   Tending and passive stations start as soon as they are ready. Integer minutes throughout.
-3. **Prep placement:** for each ingredient with `prep`, its deadline is the start of the station that adds it. Place the prep in the **latest** window before that deadline when the cook is free, i.e. not running an active station or another prep. Pack greedily, latest deadline first.
-4. **Prep that fits no window becomes a station.** It is an implicit active station ("Mince garlic") on the consuming component, just before its consumer, and is scheduled normally. If it's needed right away, it naturally becomes the first station of the map. Consecutive fallback preps on the same component are combined into one station titled "Prep", with each item as a chip.
-5. **Meanwhile attribution:** each placed prep is attached to the station (any component) that is running, in a tending or passive state, when the prep starts. If several are running, use the one that started most recently. For **passive** hosts, also compute `freeMinutes` = host duration − placed prep minutes. Show it only if it is ≥ 5.
-6. **Row order:** stations sorted by `start`. Ties: stations continuing an existing line come before stations starting a new line, then by dispatch order.
+   Tending and passive stations start as soon as they are ready, highest priority first. Integer minutes throughout.
+3. **Just in time:** food that is done early gets cold or soggy (warmed tortillas, toast, seared meat). After the forward pass, walk stations from latest to earliest and push each **active or tending** station as late as its successor allows, without overlapping the cook's other active work. **Passive** stations stay put, because resting, steeping and marinating hold fine, **unless** their line would otherwise finish more than 15 minutes (`LONG_HOLD`) before the station that merges it. Then the whole line slides later, walk-away steps included. A short hold is fine (the curry's rice rests 11 minutes and stays early), but garlic oil made two hours ahead of the focaccia reads as a mistake. This never extends the total. (In the pasta recipe, the sauce slides later so it finishes with the pasta.)
+4. **Prep placement:** for each ingredient with `prep`, its deadline is the start of the station that adds it. Place the prep in the **latest** window before that deadline when the cook is free, i.e. not running an active station or another prep. Pack greedily, latest deadline first.
+   Ties on deadline go in recipe order, so "Meanwhile" lists read in recipe order.
+5. **Prep that fits no window becomes a station.** It is an implicit active station ("Mince garlic") on the consuming component, just before its consumer. The whole schedule is then recomputed, since the new station takes the cook's time, and this repeats until every prep is placed. If it's needed right away, it naturally becomes the first station of the map. Several preps for the same consumer are combined into one station titled "Prep", with each item as a chip. These stations carry `prepFor` (ingredient ids) and are never produced by the model.
+6. **Meanwhile attribution:** each placed prep is attached to a tending or passive station that is running when the prep starts. Prefer one on the line that will use the prep, then the most recently started. For **passive** hosts, also compute `freeMinutes` = host duration − placed prep minutes. Show it only if it is ≥ 5.
+7. **Row order:** stations sorted by `start`. Ties: stations continuing an existing line come before stations starting a new line, then by dispatch order.
+8. **Waits:** between each pair of consecutive rows, find the longest stretch when nothing needs the cook: no active or tending station and no prep. Tending counts as busy, because you can't walk away from a pan that's searing. A stretch of 30 minutes or more (`LONG_WAIT`) is recorded as a wait after the earlier row and drawn as a broken line (§6.3).
 
 **Acceptance:**
 - The schedule is valid: all dependencies honored, and no overlap between active stations and preps.
-- `total` is within 15% of the critical-path lower bound.
+- `total` is within 15% of the lower bound: the larger of the longest dependency chain and the total hands-on time (active stations plus prep).
 - On the curry fixture, it reproduces the mockup's station order.
 
 ---
@@ -295,18 +299,26 @@ Each row is `display:flex; min-height:64px` with two parts:
 - A component that merges into a non-trunk line goes immediately left of that line's lane.
 - Lanes are reused once their component has merged, if a later component fits.
 
-**Line segments.** For each lane that is live during a row, draw a segment from the row's top to its bottom:
-- **Solid** (`background: <line color>`) if that component has an active or tending station running at the row's start time.
+**Line segments.** For each lane that is live during a row, draw two half-segments that meet at the dot center (24 px):
+- **Above the dot** is the run-up to this row. It is styled by the component's state at the **previous** row's start time.
+- **Below the dot** is what happens from this row on. It is styled by the state at **this** row's start time.
+- **Solid** (`background: <line color>`) if the component has an active or tending station running at that time.
 - **Dashed** otherwise: a passive station is running, or the component is idle waiting for its next step.
   - Pattern: `repeating-linear-gradient(to bottom, <line color> 0 6px, transparent 6px 11px)`.
   - The 5th-lane dotted variant uses `0 3px, transparent 3px 7px`.
-- **First station of a component:** the segment starts at the dot center (`top: 24px`).
-- **Merge row** (the row of the station that merges the component): the source segment runs `top:0; height:24px` only. A horizontal **merge bar** in the source line's color is drawn at `top:22px; height:4px`, spanning from the source x to the target x. The source lane ends there.
+- **First station of a component:** only the lower half is drawn.
+- **Merge row** (the row of the station that merges the component): only the upper half is drawn. A horizontal **merge bar** in the source line's color is drawn at `top:22px; height:4px`, spanning from the source x to the target x. The source lane ends there.
 
 **Station dot** (on the station's own lane):
 - 16×16 circle at `top:16px; left:x−8`
 - `border: 3px solid <line color>; background: --paper`
 - **Terminal station:** a 22×22 circle filled with the trunk color, with a 3px `--paper` inner ring (`box-shadow: inset 0 0 0 3px var(--paper)`), at `top:13px; left:x−11`. Every lane ends at 24 px in this row.
+
+**Wait (broken line).** A wait (§5.4 step 8) is drawn as its own row after the row it follows, like an axis break on a chart: time is compressed here.
+- The row has `min-height: 44px`, content vertically centered.
+- Each live lane draws a segment from 0 to 14 px, a gap, then a segment from 30 px to the bottom. Both are in the lane's style at the wait's start (normally dashed).
+- Two slashes sit in the gap, 14×3 px each, rotated −30°, in the lane color, centered on the lane at `top: 16px` and `top: 23px`.
+- Label: `Wait ~1h 45m` in `--text-num`, `--ink-2`.
 
 **Content**
 1. **Heading line** (flex, gap 8px, baseline, wraps):

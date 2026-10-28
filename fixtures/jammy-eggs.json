@@ -1,0 +1,44 @@
+{
+  "title": "Jammy eggs on toast",
+  "servings": "2",
+  "trunk": "toast",
+  "ingredients": [
+    { "id": "water", "name": "water", "qty": "to cover" },
+    { "id": "eggs", "name": "eggs", "qty": "4" },
+    { "id": "ice", "name": "ice water", "qty": "1 bowl" },
+    { "id": "bread", "name": "sourdough", "qty": "2 slices" },
+    { "id": "butter", "name": "butter", "qty": "1 tbsp" },
+    { "id": "salt", "name": "flaky salt", "qty": "a pinch" },
+    { "id": "chives", "name": "chives", "qty": "a few",
+      "prep": { "verb": "snip", "done": "snipped", "duration": { "min": 1, "basis": "estimated" } } }
+  ],
+  "components": [
+    {
+      "id": "eggs",
+      "name": "Eggs",
+      "outputName": "halved eggs",
+      "stations": [
+        { "id": "boil-water", "title": "Boil water", "attention": "passive",
+          "duration": { "min": 8, "basis": "estimated" }, "adds": ["water"], "merges": [] },
+        { "id": "boil-eggs", "title": "Boil eggs", "attention": "passive",
+          "duration": { "min": 7, "basis": "exact", "quote": "exactly 7 minutes" }, "adds": ["eggs"], "merges": [] },
+        { "id": "shock", "title": "Ice bath", "attention": "passive",
+          "duration": { "min": 2, "basis": "stated", "quote": "2 minutes" }, "adds": ["ice"], "merges": [] },
+        { "id": "peel", "title": "Peel, halve", "attention": "active",
+          "duration": { "min": 2, "basis": "estimated" }, "adds": [], "merges": [] }
+      ]
+    },
+    {
+      "id": "toast",
+      "name": "Toast",
+      "stations": [
+        { "id": "toast", "title": "Toast bread", "attention": "tending",
+          "duration": { "min": 3, "basis": "estimated" }, "adds": ["bread"], "merges": [], "cue": "until golden" },
+        { "id": "butter", "title": "Butter", "attention": "active",
+          "duration": { "min": 1, "basis": "estimated" }, "adds": ["butter"], "merges": [] },
+        { "id": "top", "title": "Top & serve", "attention": "active",
+          "duration": { "min": 1, "basis": "estimated" }, "adds": ["salt", "chives"], "merges": ["eggs"] }
+      ]
+    }
+  ]
+}
