@@ -4,7 +4,13 @@ import { validate } from "../model/validate";
 import { complete, type Content, type Message } from "./openrouter";
 import { EXAMPLES, PROMPT_VERSION, SYSTEM_PROMPT, repairPrompt } from "./prompt";
 
-export type ExtractInput = { kind: "text"; text: string } | { kind: "images"; images: string[] }; // data URLs
+// A recipe to read: photos (data URLs, in page order) and/or text. With no
+// photos the text is the recipe; alongside photos it's the cook's notes, or
+// more of the recipe.
+export interface ExtractInput {
+  images: string[];
+  text: string;
+}
 
 export type Stage = "reading" | "repairing";
 
@@ -15,6 +21,7 @@ export interface Extraction {
   promptVersion: number;
   cost?: number;
   repaired: boolean;
+  universalPrompt?: string; // the Settings notes in effect when this was read
 }
 
 // Validation still failed after the repair pass. Carries what parsed, so the
@@ -29,10 +36,19 @@ export class ExtractionError extends Error {
   }
 }
 
-function userContent(input: ExtractInput): Content {
-  if (input.kind === "text") return input.text;
+// Everything about this recipe goes in the final message, after the fixed
+// system prompt and examples, so that shared prefix stays identical (and
+// cacheable) across recipes.
+export function userContent(input: ExtractInput, universalPrompt?: string): Content {
+  const text = input.text.trim();
+  const kitchen = universalPrompt?.trim() ? `COOK'S KITCHEN (applies to every recipe):\n${universalPrompt.trim()}` : "";
+  if (input.images.length === 0) return [text, kitchen].filter(Boolean).join("\n\n");
+
+  const n = input.images.length;
+  const intro = `Here ${n === 1 ? "is a photo of the recipe" : `are ${n} photos of the recipe, in order`}.`;
+  const notes = text ? `TEXT FROM THE COOK (notes on this recipe, or more of it):\n${text}` : "";
   return [
-    { type: "text", text: `Here ${input.images.length === 1 ? "is the recipe" : `are ${input.images.length} photos of the recipe, in order`}.` },
+    { type: "text", text: [intro, notes, kitchen].filter(Boolean).join("\n\n") },
     ...input.images.map((url) => ({ type: "image_url" as const, image_url: { url } })),
   ];
 }
@@ -63,6 +79,7 @@ export async function extractRecipe(opts: {
   input: ExtractInput;
   apiKey: string;
   model: string;
+  universalPrompt?: string;
   signal?: AbortSignal;
   onStage?: (stage: Stage) => void;
 }): Promise<Extraction> {
@@ -73,7 +90,7 @@ export async function extractRecipe(opts: {
       { role: "user", content: e.source },
       { role: "assistant", content: e.output },
     ]),
-    { role: "user", content: userContent(opts.input) },
+    { role: "user", content: userContent(opts.input, opts.universalPrompt) },
   ];
   const call = (msgs: Message[]) =>
     complete({ apiKey: opts.apiKey, model: opts.model, messages: msgs, schema, signal: opts.signal });
@@ -101,5 +118,13 @@ export async function extractRecipe(opts: {
   }
 
   if (result.errors.length > 0 || !result.graph) throw new ExtractionError(result.errors, raw, result.graph);
-  return { graph: result.graph, warnings: result.warnings, model: opts.model, promptVersion: PROMPT_VERSION, cost, repaired };
+  return {
+    graph: result.graph,
+    warnings: result.warnings,
+    model: opts.model,
+    promptVersion: PROMPT_VERSION,
+    cost,
+    repaired,
+    universalPrompt: opts.universalPrompt?.trim() || undefined,
+  };
 }

@@ -384,6 +384,10 @@ svg.icon {
   resize: vertical;
 }
 
+.textarea.short {
+  min-height: calc(var(--s8) * 2);
+}
+
 /* Text */
 
 .note {
@@ -469,10 +473,10 @@ ul.note {
   width: var(--tap);
   height: var(--tap);
   border: 0;
-  background: none;
-  color: var(--paper);
-  text-shadow: 0 0 4px #000;
-  font-size: 16px;
+  /* A 24px dark disc inside the 48px tap target, legible on any photo. */
+  background: radial-gradient(circle, rgb(0 0 0 / 0.65) 12px, transparent 12.5px);
+  color: #fff;
+  font-size: 12px;
   cursor: pointer;
 }
 

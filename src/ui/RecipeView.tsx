@@ -1,6 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import { extractRecipe, type ExtractInput } from "../extract/extract";
-import { getApiKey, getModel } from "../store/settings";
+import { getApiKey, getModel, getUniversalPrompt } from "../store/settings";
 import { deleteRecipe, getRecipe, getSource, replaceExtraction, type RecipeRecord } from "../store/recipes";
 import { describeFailure } from "./failure";
 import { formatCost } from "../extract/cost";
@@ -43,7 +43,12 @@ export function RecipeView({ id }: { id: string }) {
     if (!source) return;
     setBusy({ kind: "rereading" });
     try {
-      const result = await extractRecipe({ input: source, apiKey: getApiKey(), model: getModel() });
+      const result = await extractRecipe({
+        input: source,
+        apiKey: getApiKey(),
+        model: getModel(),
+        universalPrompt: getUniversalPrompt(),
+      });
       setRecord(await replaceExtraction(id, result));
       setBusy({ kind: "none" });
     } catch (e) {
@@ -92,8 +97,9 @@ export function RecipeView({ id }: { id: string }) {
         </div>
         {canReread && (
           <p class="note">
-            Read again sends the original {source!.kind === "images" ? "photos" : "text"} to {getModel()} and replaces
-            this map.
+            Read again sends the original {source!.images.length > 0 ? "photos" : "text"}
+            {source!.images.length > 0 && source!.text.trim() ? " and notes" : ""} to {getModel()}
+            {getUniversalPrompt().trim() ? ", with your universal prompt," : ""} and replaces this map.
           </p>
         )}
       </footer>

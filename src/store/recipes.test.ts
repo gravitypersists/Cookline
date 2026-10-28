@@ -28,26 +28,36 @@ const extraction = (id: keyof typeof fixtures, cost = 0.001): Extraction => ({
 describe("recipe library", () => {
   it("saves recipes with their source and lists them newest first", async () => {
     const r = await import("./recipes");
-    const soup = await r.saveExtraction(extraction("tomato-soup"), { kind: "text", text: "Soup…" });
+    const soup = await r.saveExtraction(extraction("tomato-soup"), { images: [], text: "Soup…" });
     await new Promise((ok) => setTimeout(ok, 2));
-    const curry = await r.saveExtraction(extraction("curry"), { kind: "images", images: ["data:image/jpeg;base64,AAA"] });
+    const curry = await r.saveExtraction(extraction("curry"), { images: ["data:image/jpeg;base64,AAA"], text: "" });
 
     expect((await r.listRecipes()).map((x) => x.graph.title)).toEqual([curry.graph.title, soup.graph.title]);
-    expect(await r.getSource(curry.id)).toEqual({ kind: "images", images: ["data:image/jpeg;base64,AAA"] });
+    expect(await r.getSource(curry.id)).toEqual({ images: ["data:image/jpeg;base64,AAA"], text: "" });
     expect((await r.getRecipe(soup.id))?.sourceKind).toBe("text");
   });
 
   it("replaces a recipe's graph when it's read again, keeping its id and date", async () => {
     const r = await import("./recipes");
-    const saved = await r.saveExtraction(extraction("tomato-soup"), { kind: "text", text: "Soup…" });
+    const saved = await r.saveExtraction(extraction("tomato-soup"), { images: [], text: "Soup…" });
     const again = await r.replaceExtraction(saved.id, { ...extraction("curry", 0.002), repaired: true });
     expect(again).toMatchObject({ id: saved.id, createdAt: saved.createdAt, cost: 0.002, repaired: true });
     expect((await r.getRecipe(saved.id))?.graph.title).toBe(fixtures.curry!.title);
   });
 
+  it("reads sources saved before photos and text were one input", async () => {
+    const { createStore, set } = await import("idb-keyval");
+    const sources = createStore("cookline-sources", "sources");
+    await set("old-text", { kind: "text", text: "Soup…" }, sources);
+    await set("old-photos", { kind: "images", images: ["data:image/jpeg;base64,AAA"] }, sources);
+    const r = await import("./recipes");
+    expect(await r.getSource("old-text")).toEqual({ images: [], text: "Soup…" });
+    expect(await r.getSource("old-photos")).toEqual({ images: ["data:image/jpeg;base64,AAA"], text: "" });
+  });
+
   it("deletes a recipe and its source", async () => {
     const r = await import("./recipes");
-    const saved = await r.saveExtraction(extraction("curry"), { kind: "text", text: "x" });
+    const saved = await r.saveExtraction(extraction("curry"), { images: [], text: "x" });
     await r.deleteRecipe(saved.id);
     expect(await r.getRecipe(saved.id)).toBeUndefined();
     expect(await r.getSource(saved.id)).toBeUndefined();

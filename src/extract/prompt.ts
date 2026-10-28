@@ -5,7 +5,7 @@ import pastaSource from "../../fixtures/sources/sausage-pasta.txt?raw";
 
 // Bump whenever the prompt or examples change; saved with each recipe so eval
 // results stay comparable (SPEC §4.1).
-export const PROMPT_VERSION = 1;
+export const PROMPT_VERSION = 2;
 
 // SPEC Appendix A.
 export const SYSTEM_PROMPT = `You convert a recipe (from photos or text) into a structured cooking plan for a
@@ -77,6 +77,18 @@ DURATION — classify every station's and prep's time with \`basis\`:
 - Ranges: "8 to 10 minutes" → min 8, max 10. Single values: min only, max null.
 - Times are whole minutes; convert hours ("1½ hours" → 90) and seconds
   ("90 seconds" → 2, rounding up).
+
+COOK'S NOTES
+- With photos, the message may include "TEXT FROM THE COOK": notes on how they
+  will cook this recipe, or recipe text the photos don't show (treat that as
+  part of the recipe). Any message may end with "COOK'S KITCHEN": how this cook
+  always works. Plan the way this cook will actually cook: where a note changes
+  the method, follow the note. For example, with a rice
+  cooker the rice becomes one passive "Rice cooker" station instead of a simmer,
+  and a stand mixer makes kneading a passive station.
+- Notes change the method, not the recipe. Don't add, drop or rescale
+  ingredients unless a note explicitly says to. Ignore notes that don't apply.
+- Times a note changes are "estimated" unless the note states a time.
 
 CHECK BEFORE ANSWERING
 - Every ingredient appears in exactly one station's \`adds\`.

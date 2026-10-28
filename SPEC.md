@@ -49,10 +49,11 @@ The structural reference is `designs/C · Transit map-html/C-Transit.dc.html` (s
 ## 3. User flows
 
 1. **First run:** Settings prompts for the OpenRouter key and model (with a default preselected). A "Test key" button checks the key for free.
-2. **Capture:** From the Library, tap **New**. Choose:
-   - **Camera** (`<input type="file" accept="image/*" capture="environment">`)
-   - **Photos** (multi-select, for recipes spread over 2+ pages or screenshots)
-   - **Paste text**
+2. **Capture** (`#/new`): one page, with no photo/text switch.
+   - Two tiles: **Take photo** (`capture="environment"`; it becomes "Take another" once there's a photo) and **Choose photos** (multi-select, for recipes over 2+ pages or screenshots). Thumbnails appear in order, each with a remove button.
+   - One text box. With no photos it's labelled "Or paste the recipe" and holds the recipe. Once there's a photo it becomes "Notes (optional)": anything the photos don't say ("making a double batch", "no oven, using the air fryer"), or the rest of the recipe.
+   - **Make map** is enabled once there's a photo or some text.
+   - The input is one shape, `{ images, text }`. Sources saved in the earlier `{ kind: "text" | "images" }` shape are converted when read.
 3. **Processing:** progress states: _Reading recipe…_, then _Fixing a few problems…_ if a repair pass runs. Scheduling and layout are local and instant. You can cancel. Errors show the reason and a **Try again** button. Validation errors also show the list and the raw model output.
 4. **Map:** the transit map (§6). Each extraction is saved to the library as soon as it succeeds and opens at `#/recipe/<id>`.
    - **Share image** is in the top bar (§6.5).
@@ -65,7 +66,8 @@ The structural reference is `designs/C · Transit map-html/C-Transit.dc.html` (s
    - Below it: **New recipe** (full width, with a camera icon), then the saved recipes, newest first.
    - Each recipe card shows a glyph of its lines (one 4×24 bar per line, in map order and color), its title, `~total` and age ("today", "3 days ago"), and a chevron.
    - Then the example fixtures under **Examples**, which is open when nothing is saved yet and collapsed otherwise. Works offline. The milestone 3 "last extraction" in localStorage is moved into the library once.
-7. **Settings:** four panels: **OpenRouter key** (test, clear), **Model** (picker plus the estimated cost per recipe), **Share Cookline** (§3.1), and **Appearance** (System / Light / Dark).
+7. **Settings:** five panels: **OpenRouter key** (test, clear), **Model** (picker plus the estimated cost per recipe), **Universal prompt**, **Share Cookline** (§3.1), and **Appearance** (System / Light / Dark).
+   - **Universal prompt:** free text, blank by default, placeholder "For example: I cook my rice in a rice cooker, and I knead dough in a stand mixer." It's added to every recipe read, new ones and Read again, so the maps fit how this cook works. Each saved recipe records the universal prompt it was read with.
 
 ### 3.1 Share links
 
@@ -99,7 +101,11 @@ render + save
 
 ### 4.1 Model call
 
-- One request, with the image(s) as `image_url` data URLs, plus the system prompt in **Appendix A**. Use `response_format: { type: "json_schema", strict: true }` and `provider: { require_parameters: true }`, so OpenRouter only routes to providers that honor the schema.
+- One request: the system prompt in **Appendix A**, the worked examples, then a final user message with everything about this recipe:
+  - **No photos:** the pasted text, then `COOK'S KITCHEN (applies to every recipe):` with the universal prompt, if there is one.
+  - **With photos:** a text part ("Here are 2 photos of the recipe, in order."), then `TEXT FROM THE COOK (notes on this recipe, or more of it):` with the text box, then the universal prompt as above, then the photos as `image_url` data URLs.
+
+  Keeping the notes out of the system prompt means the long shared prefix is identical across recipes, so providers can cache it. The prompt's COOK'S NOTES section says notes change the method (a rice cooker turns the rice into one passive station), not the ingredients. Use `response_format: { type: "json_schema", strict: true }` and `provider: { require_parameters: true }`, so OpenRouter only routes to providers that honor the schema.
 - **Wire format** (`src/model/schema.ts`): strict mode needs every property present, so the schema the model fills in is the §5.1 types with optional fields made **nullable** instead of omitted. `fromWire` turns nulls into missing fields. The JSON Schema is generated from zod.
 - The model is configurable in Settings. The picker lists only models from OpenRouter's `/models` that take image input and support `structured_outputs` (excluding batch-only and router models). The **recommended** model, `anthropic/claude-haiku-5.5`, is preselected and sits alone in a "Recommended" group at the top. The eval in §9 revisits it. The rest are grouped by provider (taken from OpenRouter's "Provider: Model" names, A to Z) and sorted by estimated cost per photo within each group. Options show the model name without the provider, plus its cost. Per-token prices are not shown, since the per-recipe estimate replaces them.
 - **Cost per recipe** (`src/extract/cost.ts`) appears in each option and as a sentence under the picker. It is an estimate, made of:
@@ -513,7 +519,7 @@ Scheduling and layout are **pure functions** with no DOM. The UI renders `RowMod
 
 ## Appendix A — Extraction prompt (v1)
 
-System prompt, sent with the JSON schema. `src/extract/prompt.ts` is the source of truth; this copy is v1. Two worked examples follow it as earlier user/assistant turns: the source texts in `fixtures/sources/` paired with the `garlic-shrimp` and `sausage-pasta` fixtures in wire format.
+System prompt, sent with the JSON schema. `src/extract/prompt.ts` is the source of truth; this copy is v2 (v2 added COOK'S NOTES). Two worked examples follow it as earlier user/assistant turns: the source texts in `fixtures/sources/` paired with the `garlic-shrimp` and `sausage-pasta` fixtures in wire format.
 
 ```text
 You convert a recipe (from photos or text) into a structured cooking plan for a
@@ -585,6 +591,18 @@ DURATION — classify every station's and prep's time with `basis`:
 - Ranges: "8 to 10 minutes" → min 8, max 10. Single values: min only, max null.
 - Times are whole minutes; convert hours ("1½ hours" → 90) and seconds
   ("90 seconds" → 2, rounding up).
+
+COOK'S NOTES
+- With photos, the message may include "TEXT FROM THE COOK": notes on how they
+  will cook this recipe, or recipe text the photos don't show (treat that as
+  part of the recipe). Any message may end with "COOK'S KITCHEN": how this cook
+  always works. Plan the way this cook will actually cook: where a note changes
+  the method, follow the note. For example, with a rice
+  cooker the rice becomes one passive "Rice cooker" station instead of a simmer,
+  and a stand mixer makes kneading a passive station.
+- Notes change the method, not the recipe. Don't add, drop or rescale
+  ingredients unless a note explicitly says to. Ignore notes that don't apply.
+- Times a note changes are "estimated" unless the note states a time.
 
 CHECK BEFORE ANSWERING
 - Every ingredient appears in exactly one station's `adds`.

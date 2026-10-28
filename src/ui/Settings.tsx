@@ -1,6 +1,15 @@
 import { useEffect, useState } from "preact/hooks";
 import { checkKey, listModels, type ModelInfo } from "../extract/openrouter";
-import { RECOMMENDED_MODEL, clearApiKey, getApiKey, getModel, setApiKey, setModel } from "../store/settings";
+import {
+  RECOMMENDED_MODEL,
+  clearApiKey,
+  getApiKey,
+  getModel,
+  getUniversalPrompt,
+  setApiKey,
+  setModel,
+  setUniversalPrompt,
+} from "../store/settings";
 import { costLabel, costSentence, estimateCost } from "../extract/cost";
 import { ShareKey } from "./ShareKey";
 import { ThemeSwitch } from "./ThemeSwitch";
@@ -38,6 +47,7 @@ export function Settings() {
   const [model, setModelState] = useState(getModel);
   const [models, setModels] = useState<ModelInfo[] | null>(null);
   const [modelsError, setModelsError] = useState(false);
+  const [universal, setUniversal] = useState(getUniversalPrompt);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -171,6 +181,26 @@ export function Settings() {
               </button>
             </>
           )}
+        </p>
+      </section>
+
+      <section class="panel">
+        <label class="panel-title" for="universal-prompt">
+          Universal prompt
+        </label>
+        <textarea
+          id="universal-prompt"
+          class="input textarea short"
+          placeholder="For example: I cook my rice in a rice cooker, and I knead dough in a stand mixer."
+          value={universal}
+          onInput={(e) => {
+            const v = (e.target as HTMLTextAreaElement).value;
+            setUniversal(v);
+            setUniversalPrompt(v);
+          }}
+        />
+        <p class="note">
+          Added to every recipe you read, so the maps fit how you cook. It applies to new recipes and to Read again.
         </p>
       </section>
 

@@ -16,7 +16,20 @@ export interface RecipeRecord {
   cost?: number; // USD for the extraction that produced this graph
   warnings: string[];
   repaired: boolean;
-  sourceKind: ExtractInput["kind"];
+  universalPrompt?: string; // the Settings notes in effect when it was read
+  sourceKind: SourceKind;
+}
+
+export type SourceKind = "images" | "text"; // what the recipe was read from, for display
+
+const kindOf = (s: ExtractInput): SourceKind => (s.images.length > 0 ? "images" : "text");
+
+// Before photos and text were one input, sources were stored as
+// { kind: "text", text } or { kind: "images", images }.
+type LegacySource = { kind: "text"; text: string } | { kind: "images"; images: string[] };
+function normalizeSource(s: ExtractInput | LegacySource | undefined): ExtractInput | undefined {
+  if (!s || !("kind" in s)) return s;
+  return s.kind === "text" ? { images: [], text: s.text } : { images: s.images, text: "" };
 }
 
 const recipes = createStore("cookline-recipes", "recipes");
@@ -24,7 +37,7 @@ const sources = createStore("cookline-sources", "sources");
 
 const newId = () => crypto.randomUUID().slice(0, 8);
 
-function fromExtraction(e: Extraction, sourceKind: ExtractInput["kind"]) {
+function fromExtraction(e: Extraction, sourceKind: SourceKind) {
   return {
     graph: e.graph,
     model: e.model,
@@ -32,6 +45,7 @@ function fromExtraction(e: Extraction, sourceKind: ExtractInput["kind"]) {
     cost: e.cost,
     warnings: e.warnings,
     repaired: e.repaired,
+    universalPrompt: e.universalPrompt,
     sourceKind,
   };
 }
@@ -44,7 +58,7 @@ function persist() {
 
 export async function saveExtraction(e: Extraction, source: ExtractInput): Promise<RecipeRecord> {
   const now = Date.now();
-  const record: RecipeRecord = { id: newId(), createdAt: now, updatedAt: now, ...fromExtraction(e, source.kind) };
+  const record: RecipeRecord = { id: newId(), createdAt: now, updatedAt: now, ...fromExtraction(e, kindOf(source)) };
   await set(record.id, source, sources);
   await set(record.id, record, recipes);
   persist();
@@ -61,7 +75,7 @@ export async function replaceExtraction(id: string, e: Extraction): Promise<Reci
 }
 
 export const getRecipe = (id: string) => get<RecipeRecord>(id, recipes);
-export const getSource = (id: string) => get<ExtractInput>(id, sources);
+export const getSource = async (id: string) => normalizeSource(await get(id, sources));
 
 export async function listRecipes(): Promise<RecipeRecord[]> {
   await migrateLast();

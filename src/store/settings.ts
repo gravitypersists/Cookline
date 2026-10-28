@@ -4,6 +4,7 @@ import { read, remove, write } from "./storage";
 // in requests to openrouter.ai, or encrypted in a share link (SPEC §3).
 const KEY = "cookline.openrouterKey";
 const MODEL = "cookline.model";
+const UNIVERSAL_PROMPT = "cookline.universalPrompt";
 
 // Recommended (and preselected): cheap, reads photos, honors JSON schemas. The
 // eval in milestone 6 revisits this.
@@ -14,3 +15,7 @@ export const setApiKey = (key: string) => write(KEY, key.trim());
 export const clearApiKey = () => remove(KEY);
 export const getModel = () => read(MODEL) || RECOMMENDED_MODEL;
 export const setModel = (model: string) => write(MODEL, model);
+
+// Notes about how this cook works, sent with every recipe read (SPEC §3).
+export const getUniversalPrompt = () => read(UNIVERSAL_PROMPT) ?? "";
+export const setUniversalPrompt = (text: string) => write(UNIVERSAL_PROMPT, text);
