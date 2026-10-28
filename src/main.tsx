@@ -1,22 +1,24 @@
 import { render } from "preact";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/transit.css";
 import { fixtures } from "../fixtures";
-import type { RecipeGraph } from "./model/types";
-import { plan } from "./schedule/plan";
-import { buildMap } from "./layout/rows";
-import { loadLast } from "./store/last";
-import { TransitMap } from "./ui/TransitMap";
-import { Home } from "./ui/Home";
+import { Library } from "./ui/Library";
 import { Settings } from "./ui/Settings";
 import { Capture } from "./ui/Capture";
+import { MapView } from "./ui/MapView";
+import { RecipeView } from "./ui/RecipeView";
+import { TopBar } from "./ui/TopBar";
 import { applyStoredTheme } from "./ui/ThemeSwitch";
 import { Import } from "./ui/Import";
 import { parseShareHash } from "./share/share";
+import { registerSW } from "virtual:pwa-register";
 
 applyStoredTheme();
+
+// Offline support and installability; updates apply on the next launch.
+registerSW({ immediate: true });
 
 // A share link carries a one-time secret in the fragment. Take it, then
 // replace the URL so the secret doesn't linger in history or bookmarks.
@@ -29,7 +31,7 @@ type Route =
   | { name: "new" }
   | { name: "settings" }
   | { name: "fixture"; id: string }
-  | { name: "last" }
+  | { name: "recipe"; id: string }
   | { name: "import" };
 
 function parse(hash: string): Route {
@@ -37,7 +39,8 @@ function parse(hash: string): Route {
   if (fixture && fixture in fixtures) return { name: "fixture", id: fixture };
   if (hash === "#/new") return { name: "new" };
   if (hash === "#/settings") return { name: "settings" };
-  if (hash === "#/recipe/last") return { name: "last" };
+  const recipe = hash.match(/^#\/recipe\/([\w-]+)$/)?.[1];
+  if (recipe) return { name: "recipe", id: recipe };
   if (hash === "#/import") return { name: "import" };
   return { name: "home" };
 }
@@ -55,60 +58,16 @@ function useRoute(): Route {
   return route;
 }
 
-function MapView({ graph, children }: { graph: RecipeGraph; children?: preact.ComponentChildren }) {
-  const map = useMemo(() => {
-    const { graph: planned, schedule } = plan(graph);
-    return buildMap(planned, schedule);
-  }, [graph]);
-  return (
-    <>
-      <TransitMap map={map} />
-      {children}
-    </>
-  );
-}
-
-function LastRecipe() {
-  const last = useMemo(loadLast, []);
-  if (!last) {
-    location.hash = "#/";
-    return null;
-  }
-  const cost = last.cost !== undefined ? ` · $${last.cost.toFixed(4)}` : "";
-  return (
-    <MapView graph={last.graph}>
-      <footer class="page meta">
-        {last.warnings.length > 0 && (
-          <ul class="note">
-            {last.warnings.map((w) => (
-              <li>{w}</li>
-            ))}
-          </ul>
-        )}
-        <p class="note">
-          Read by {last.model}
-          {cost}
-          {last.repaired && " · fixed on a second pass"}
-        </p>
-      </footer>
-    </MapView>
-  );
-}
-
 function App() {
   const route = useRoute();
   return (
     <>
-      {route.name !== "home" && (
-        <nav class="topbar">
-          <a href="#/">‹ Recipes</a>
-        </nav>
-      )}
-      {route.name === "home" && <Home />}
+      {["new", "settings", "import"].includes(route.name) && <TopBar />}
+      {route.name === "home" && <Library />}
       {route.name === "new" && <Capture />}
       {route.name === "settings" && <Settings />}
       {route.name === "fixture" && <MapView key={route.id} graph={fixtures[route.id]!} />}
-      {route.name === "last" && <LastRecipe />}
+      {route.name === "recipe" && <RecipeView key={route.id} id={route.id} />}
       {route.name === "import" && <Import token={shareToken} />}
     </>
   );

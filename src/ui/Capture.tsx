@@ -1,8 +1,9 @@
 import { useRef, useState } from "preact/hooks";
-import { ExtractionError, extractRecipe, type Stage } from "../extract/extract";
+import { extractRecipe, type ExtractInput, type Stage } from "../extract/extract";
 import { downscale } from "../extract/image";
 import { getApiKey, getModel } from "../store/settings";
-import { saveLast } from "../store/last";
+import { saveExtraction } from "../store/recipes";
+import { describeFailure } from "./failure";
 
 type Mode = "photos" | "text";
 type Status =
@@ -45,22 +46,20 @@ export function Capture() {
   const run = async () => {
     abort.current = new AbortController();
     setStatus({ kind: "working", stage: "reading" });
+    const input: ExtractInput = mode === "photos" ? { kind: "images", images } : { kind: "text", text };
     try {
       const result = await extractRecipe({
-        input: mode === "photos" ? { kind: "images", images } : { kind: "text", text },
+        input,
         apiKey,
         model: getModel(),
         signal: abort.current.signal,
         onStage: (stage) => setStatus({ kind: "working", stage }),
       });
-      saveLast(result);
-      location.hash = "#/recipe/last";
+      const record = await saveExtraction(result, input);
+      location.hash = `#/recipe/${record.id}`;
     } catch (e) {
       if ((e as Error).name === "AbortError") return setStatus({ kind: "idle" });
-      if (e instanceof ExtractionError) {
-        return setStatus({ kind: "failed", message: e.message, errors: e.errors, raw: e.raw });
-      }
-      setStatus({ kind: "failed", message: (e as Error).message || "Something went wrong." });
+      setStatus({ kind: "failed", ...describeFailure(e) });
     }
   };
 

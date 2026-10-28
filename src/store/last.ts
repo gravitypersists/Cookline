@@ -1,12 +1,9 @@
 import type { Extraction } from "../extract/extract";
-import { read, write } from "./storage";
+import { read, remove } from "./storage";
 
-// The most recent extraction, until the recipe library lands (milestone 4).
+// Milestone 3 kept the most recent extraction here. Read only to migrate it
+// into the library (store/recipes.ts).
 const KEY = "cookline.lastExtraction";
-
-export function saveLast(e: Extraction) {
-  write(KEY, JSON.stringify(e));
-}
 
 export function loadLast(): Extraction | null {
   try {
@@ -15,3 +12,5 @@ export function loadLast(): Extraction | null {
     return null;
   }
 }
+
+export const clearLast = () => remove(KEY);

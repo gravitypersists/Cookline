@@ -69,6 +69,29 @@ button {
   max-width: 640px;
   margin: 0 auto;
   padding: env(safe-area-inset-top) var(--space-2) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.topbar-button {
+  min-height: var(--tap);
+  padding: 0 var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--ink-1);
+  font: var(--text-chip);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.topbar-button:disabled {
+  color: var(--ink-2);
 }
 
 .topbar a {
@@ -81,8 +104,9 @@ button {
   text-decoration: none;
 }
 
-/* The map page's own top padding sits under the top bar. */
-.topbar + .page {
+/* A page's own top padding sits under the top bar. */
+.topbar + .page,
+.topbar + .export-root > .page {
   padding-top: var(--space-2);
 }
 
@@ -114,6 +138,37 @@ a {
   border: 1px solid var(--rule);
   border-radius: var(--radius-card);
   padding: var(--space-3) var(--space-4);
+}
+
+.link-card.recipe-card {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  padding-block: var(--space-2);
+}
+
+.examples summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.examples summary::-webkit-details-marker {
+  display: none;
+}
+
+.examples summary::after {
+  content: "›";
+  font-size: 16px;
+  transition: transform 150ms ease;
+}
+
+.examples[open] summary::after {
+  transform: rotate(90deg);
 }
 
 .link-card {

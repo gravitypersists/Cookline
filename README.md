@@ -34,7 +34,7 @@ npm test
 npm run build    # static site in dist/
 ```
 
-Open **Settings** and paste an [OpenRouter](https://openrouter.ai) API key, then tap **New recipe**. The example recipes on the home screen work without a key.
+Open **Settings** and paste an [OpenRouter](https://openrouter.ai) API key, then tap **New recipe**. The example recipes on the home screen work without a key. On a phone, use **Add to Home Screen** to install it; saved recipes work offline.
 
 ## Costs and privacy
 
@@ -55,6 +55,7 @@ src/extract/   OpenRouter client, extraction prompt, repair pass, photo downscal
 src/schedule/  single-cook scheduler and prep placement
 src/layout/    lanes and rows for the map (pure functions)
 src/share/     one-time encrypted share links via PrivateBin
+src/store/     saved recipes (IndexedDB) and settings (localStorage)
 src/ui/        Preact screens and the transit map
 fixtures/      hand-written recipes covering the main shapes
 SPEC.md        the full spec: data model, scheduling rules, style system, prompt
@@ -66,9 +67,9 @@ Done:
 - Milestone 1: the renderer
 - Milestone 2: the scheduler
 - Milestone 3: extraction (not yet tried with a real OpenRouter key)
+- Milestone 4: the recipe library (saved on the phone, works offline), installing as an app, sharing a map as an image
 
 Next:
-- the recipe library with offline use
 - an edit screen
 - a model eval
 

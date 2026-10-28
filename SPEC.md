@@ -9,6 +9,7 @@ The structural reference is `designs/C · Transit map-html/C-Transit.dc.html` (s
 ## 1. Goals and non-goals
 
 **Goals**
+
 - Capture a recipe from a phone camera, photo library, or pasted text, and render it as a transit map within ~30 s.
 - Show, at a glance:
   - which components exist and when they merge
@@ -19,6 +20,7 @@ The structural reference is `designs/C · Transit map-html/C-Transit.dc.html` (s
 - Saved recipes work offline.
 
 **Non-goals (v1)**
+
 - Countdown timers, alarms, or step-by-step "cook mode" playback.
 - Accounts, sync, sharing a recipe library between devices.
 - Scaling servings or converting units.
@@ -28,16 +30,17 @@ The structural reference is `designs/C · Transit map-html/C-Transit.dc.html` (s
 
 ## 2. Constraints and platform
 
-| Concern | Decision |
-|---|---|
-| Hosting | GitHub Pages, deployed by GitHub Actions (§10). |
-| Routing | Hash-based (`#/recipe/:id`), because Pages has no server rewrites. |
-| Install | PWA: web manifest + service worker; "Add to Home Screen" on iOS/Android. |
-| Model access | Browser calls `https://openrouter.ai/api/v1/chat/completions` directly with the user's key (OpenRouter allows browser CORS). |
-| API key | Entered in Settings and stored in `localStorage` on the device. Never committed, never built into the bundle. Can be cleared in Settings (two taps), or handed to another phone with a one-time share link (§3.1). |
-| Storage | IndexedDB (`idb-keyval`) for recipes and source images (images downscaled, see §4.1). |
-| Viewport | Designed at 390 px wide, must work from 360 px to tablet widths. No horizontal page scroll. |
-| Theme | Light and dark (§6.1). Follows the OS setting by default, with an override in Settings. |
+| Concern      | Decision                                                                                                                                                                                                                                                                                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Hosting      | GitHub Pages, deployed by GitHub Actions (§10).                                                                                                                                                                                                                                                                                                                    |
+| Routing      | Hash-based (`#/recipe/:id`), because Pages has no server rewrites.                                                                                                                                                                                                                                                                                                 |
+| Install      | PWA via `vite-plugin-pwa`: web manifest, icons (`public/`, including a maskable one) and a service worker that updates on the next launch. "Add to Home Screen" on iOS/Android.                                                                                                                                                                                    |
+| Offline      | The service worker precaches the app shell. It caches Google Fonts as they're used (the CSS revalidates in the background; the font files are cache-first for a year), so saved recipes render offline in the real typefaces. OpenRouter and PrivateBin requests are never cached.                                                                                 |
+| Model access | Browser calls `https://openrouter.ai/api/v1/chat/completions` directly with the user's key (OpenRouter allows browser CORS).                                                                                                                                                                                                                                       |
+| API key      | Entered in Settings and stored in `localStorage` on the device. Never committed, never built into the bundle. Can be cleared in Settings (two taps), or handed to another phone with a one-time share link (§3.1).                                                                                                                                                 |
+| Storage      | IndexedDB via `idb-keyval`, in two databases: `cookline-recipes` (graph and extraction details) and `cookline-sources` (the original text or downscaled photos, kept for **Read again**), so listing the library never loads photos. On first save the app asks for persistent storage (`navigator.storage.persist()`), so the browser is less likely to evict it. |
+| Viewport     | Designed at 390 px wide, must work from 360 px to tablet widths. No horizontal page scroll.                                                                                                                                                                                                                                                                        |
+| Theme        | Light and dark (§6.1). Follows the OS setting by default, with an override in Settings.                                                                                                                                                                                                                                                                            |
 
 **Stack:** Vite + TypeScript + Preact, `vite-plugin-pwa`, `idb-keyval`, `zod` (schemas, with JSON Schema generated for structured output), `html-to-image` (PNG export), Vitest, Playwright.
 
@@ -46,15 +49,18 @@ The structural reference is `designs/C · Transit map-html/C-Transit.dc.html` (s
 ## 3. User flows
 
 1. **First run:** Settings prompts for the OpenRouter key and model (with a default preselected). A "Test key" button checks the key for free.
-   Until the Library exists (milestone 4), Home shows **New recipe**, the last recipe read, and the example fixtures.
 2. **Capture:** From the Library, tap **New**. Choose:
    - **Camera** (`<input type="file" accept="image/*" capture="environment">`)
    - **Photos** (multi-select, for recipes spread over 2+ pages or screenshots)
    - **Paste text**
-3. **Processing:** progress states: *Reading recipe…*, then *Fixing a few problems…* if a repair pass runs. Scheduling and layout are local and instant. You can cancel. Errors show the reason and a **Try again** button. Validation errors also show the list and the raw model output.
-4. **Map:** the transit map (§6). Actions: **Edit**, **Share/Export PNG**, **Re-extract**, **Delete**.
+3. **Processing:** progress states: _Reading recipe…_, then _Fixing a few problems…_ if a repair pass runs. Scheduling and layout are local and instant. You can cancel. Errors show the reason and a **Try again** button. Validation errors also show the list and the raw model output.
+4. **Map:** the transit map (§6). Each extraction is saved to the library as soon as it succeeds and opens at `#/recipe/<id>`.
+   - **Share image** is in the top bar (§6.5).
+   - Below the map: which model read it and what it cost, then **Read again** and **Delete** (two taps).
+   - **Read again** sends the saved source to the current model and replaces the graph in place, keeping the id and date.
+   - **Edit** comes in milestone 5.
 5. **Edit:** a form-level editor for the extracted graph (§7). Saving re-runs scheduling and layout locally, with no model call.
-6. **Library:** saved recipes, newest first, showing title and `~total`. Works offline.
+6. **Library** (Home): **New recipe**, then saved recipes, newest first, each showing its title, `~total` and age ("today", "3 days ago"), then the example fixtures under a collapsed **Examples**, then Settings. Works offline. The milestone 3 "last extraction" in localStorage is moved into the library once.
 7. **Settings:** API key (test, clear), model, theme (System / Light / Dark), and sharing (§3.1).
 
 ### 3.1 Share links
@@ -88,6 +94,7 @@ render + save
 ```
 
 ### 4.1 Model call
+
 - One request, with the image(s) as `image_url` data URLs, plus the system prompt in **Appendix A**. Use `response_format: { type: "json_schema", strict: true }` and `provider: { require_parameters: true }`, so OpenRouter only routes to providers that honor the schema.
 - **Wire format** (`src/model/schema.ts`): strict mode needs every property present, so the schema the model fills in is the §5.1 types with optional fields made **nullable** instead of omitted. `fromWire` turns nulls into missing fields. The JSON Schema is generated from zod.
 - The model is configurable in Settings. The picker lists only models from OpenRouter's `/models` that take image input and support `structured_outputs` (excluding batch-only and router models). The **recommended** model, `anthropic/claude-haiku-5.5` ($0.10 / $0.50 per M tokens), is preselected and listed first, labelled "(recommended)". The eval in §9 revisits it. The rest are sorted by estimated cost per photo.
@@ -97,10 +104,12 @@ render + save
   - plus ~1,500 output tokens, the size of a detailed graph
 
   Photo tokens are rough per model family, because OpenRouter's metadata doesn't say: Claude ~2,460, OpenAI ~765, Gemini ~1,300, others ~1,500. They're priced at the model's image rate when it has one. Text and photo are shown separately when they differ at two significant figures, e.g. "About 0.11¢ per recipe from text, 0.13¢ from a photo." The note adds that a repair pass roughly doubles the cost.
+
 - **Test key** uses `GET /api/v1/key`, which costs nothing and reports the remaining credit.
 - The prompt lives in `src/extract/prompt.ts` as a versioned constant. Each saved recipe records `promptVersion` and `model` so eval results stay comparable.
 
 ### 4.2 Repair
+
 If validation fails, make **one** repair attempt. If it still fails, show the errors and open the Edit screen with whatever parsed, so the user can fix it by hand.
 
 ---
@@ -111,22 +120,22 @@ If validation fails, make **one** repair attempt. If it still fails, show the er
 
 ```ts
 type Attention =
-  | "active"    // hands busy; excludes other active work (dicing, flipping, stirring constantly)
-  | "tending"   // on the heat, stay nearby; small prep can happen alongside (sweat, cook down, sear)
-  | "passive";  // walk-away time (rest, simmer lid on, bake, marinate)
+  | "active" // hands busy; excludes other active work (dicing, flipping, stirring constantly)
+  | "tending" // on the heat, stay nearby; small prep can happen alongside (sweat, cook down, sear)
+  | "passive"; // walk-away time (rest, simmer lid on, bake, marinate)
 
 // How much the clock matters for this step.
 type TimeBasis =
   | "estimated" // the recipe gives no time; the model estimated it          → shown "~6m"
-  | "stated"    // the recipe gives a time, but doneness is judged by a cue    → shown "~6m"
-  | "exact";    // the clock IS the doneness test (rare)                       → shown "⏱ 6m"
+  | "stated" // the recipe gives a time, but doneness is judged by a cue    → shown "~6m"
+  | "exact"; // the clock IS the doneness test (rare)                       → shown "⏱ 6m"
 
 interface Duration {
-  min: number;        // minutes
-  max?: number;       // for ranges: "8–10 minutes" → min 8, max 10
+  min: number; // minutes
+  max?: number; // for ranges: "8–10 minutes" → min 8, max 10
   basis: TimeBasis;
-  quote?: string;     // the time phrase verbatim from the recipe: "8 to 10 minutes".
-                      // Required for "stated" and "exact"; forbidden for "estimated".
+  quote?: string; // the time phrase verbatim from the recipe: "8 to 10 minutes".
+  // Required for "stated" and "exact"; forbidden for "estimated".
 }
 
 interface RecipeGraph {
@@ -134,34 +143,36 @@ interface RecipeGraph {
   servings?: string;
   ingredients: Ingredient[];
   components: Component[];
-  trunk: string;               // component id the final station belongs to
+  trunk: string; // component id the final station belongs to
 }
 
 interface Ingredient {
   id: string;
-  name: string;                // "garlic"
-  qty?: string;                // "4 cloves" — as printed, units may be abbreviated
-  prep?: { verb: string;       // "mince" — imperative, for "Meanwhile: mince garlic"
-           done: string;       // "minced" — past participle, for the chip
-           duration: Duration };
+  name: string; // "garlic"
+  qty?: string; // "4 cloves" — as printed, units may be abbreviated
+  prep?: {
+    verb: string; // "mince" — imperative, for "Meanwhile: mince garlic"
+    done: string; // "minced" — past participle, for the chip
+    duration: Duration;
+  };
 }
 
 interface Component {
   id: string;
-  name: string;                // "Sauce" — legend and line label
-  outputName?: string;         // "seared eggplant" — chip label when merged into another line
-  stations: Station[];         // in order
+  name: string; // "Sauce" — legend and line label
+  outputName?: string; // "seared eggplant" — chip label when merged into another line
+  stations: Station[]; // in order
 }
 
 interface Station {
   id: string;
-  title: string;               // "Simmer, lid on"
+  title: string; // "Simmer, lid on"
   attention: Attention;
   duration: Duration;
-  adds: string[];              // ingredient ids added at this station
-  merges: string[];            // component ids whose final state is combined in here
-  cue?: string;                // "until thickened" — the doneness signal, when the recipe gives one
-  detail?: string;             // original instruction text
+  adds: string[]; // ingredient ids added at this station
+  merges: string[]; // component ids whose final state is combined in here
+  cue?: string; // "until thickened" — the doneness signal, when the recipe gives one
+  detail?: string; // original instruction text
 }
 ```
 
@@ -174,13 +185,14 @@ interface Schedule {
   stations: Record<StationId, { start: number; end: number; order: number }>;
   meanwhile: Record<StationId, { prepIds: string[]; freeMinutes?: number }>;
   waits: { after: StationId; start: number; minutes: number }[]; // long hands-free stretches (§5.4 step 8)
-  total: number;               // minutes, end of terminal station
+  total: number; // minutes, end of terminal station
 }
 ```
 
 Persist `RecipeGraph` plus user edits, `model`, and `promptVersion`. Always recompute `Schedule` and layout, so that improvements to the algorithm apply to saved recipes.
 
 ### 5.3 Validation rules
+
 - IDs are unique; every reference resolves.
 - Every component except the trunk is merged exactly once, into a station of another component.
 - The merge graph is a tree rooted at the trunk (no cycles, and nothing unreachable from the trunk).
@@ -206,6 +218,7 @@ The model is one cook. Components run in parallel, but **active** stations and p
    - Remaining ties go to component order.
 
    Tending and passive stations start as soon as they are ready, highest priority first. Integer minutes throughout.
+
 3. **Just in time:** food that is done early gets cold or soggy (warmed tortillas, toast, seared meat). After the forward pass, walk stations from latest to earliest and push each **active or tending** station as late as its successor allows, without overlapping the cook's other active work. **Passive** stations stay put, because resting, steeping and marinating hold fine, **unless** their line would otherwise finish more than 15 minutes (`LONG_HOLD`) before the station that merges it. Then the whole line slides later, walk-away steps included. A short hold is fine (the curry's rice rests 11 minutes and stays early), but garlic oil made two hours ahead of the focaccia reads as a mistake. This never extends the total. (In the pasta recipe, the sauce slides later so it finishes with the pasta.)
 4. **Prep placement:** for each ingredient with `prep`, its deadline is the start of the station that adds it. Place the prep in the **latest** window before that deadline when the cook is free, i.e. not running an active station or another prep. Pack greedily, latest deadline first.
    Ties on deadline go in recipe order, so "Meanwhile" lists read in recipe order.
@@ -215,6 +228,7 @@ The model is one cook. Components run in parallel, but **active** stations and p
 8. **Waits:** between each pair of consecutive rows, find the longest stretch when nothing needs the cook: no active or tending station and no prep. Tending counts as busy, because you can't walk away from a pan that's searing. A stretch of 30 minutes or more (`LONG_WAIT`) is recorded as a wait after the earlier row and drawn as a broken line (§6.3).
 
 **Acceptance:**
+
 - The schedule is valid: all dependencies honored, and no overlap between active stations and preps.
 - `total` is within 15% of the lower bound: the larger of the longest dependency chain and the total hands-on time (active stations plus prep).
 - On the curry fixture, it reproduces the mockup's station order.
@@ -224,6 +238,7 @@ The model is one cook. Components run in parallel, but **active** stations and p
 ## 6. Style system: "Mise"
 
 The map is used propped up on a counter, read at arm's length, in a bright kitchen, by someone with messy hands. That drives the decisions:
+
 - larger type than a typical app
 - warm paper-like light mode as an equal citizen alongside dark
 - color reserved for the lines, the only data
@@ -233,55 +248,57 @@ The map is used propped up on a counter, read at arm's length, in a bright kitch
 ### 6.1 Tokens
 
 Define all tokens on `:root` in `src/styles/tokens.css`:
+
 - Light values are the default.
 - Dark values are set under `@media (prefers-color-scheme: dark)`, guarded with `:root:not([data-theme="light"])`.
 - Dark values are set again under `:root[data-theme="dark"]` for the Settings override.
 
 **Surfaces and ink**
 
-| Token | Light | Dark | Use |
-|---|---|---|---|
-| `--paper` | `#f8f4ec` | `#1a1815` | page background |
-| `--paper-raised` | `#fffdf8` | `#24211d` | chips, meanwhile callouts, cards |
-| `--rule` | `#e2dacb` | `#3a3631` | borders, dividers |
-| `--ink-1` | `#22201c` (14.8:1) | `#f0ebe0` (14.9:1) | primary text |
-| `--ink-2` | `#5c564c` (6.6:1) | `#b5ad9f` (8.0:1) | secondary text, quantities, timecodes |
-| `--ink-3` | `#8a8377` | `#857e72` | non-text decoration only (icons beside text, dash gaps) |
+| Token            | Light              | Dark               | Use                                                     |
+| ---------------- | ------------------ | ------------------ | ------------------------------------------------------- |
+| `--paper`        | `#f8f4ec`          | `#1a1815`          | page background                                         |
+| `--paper-raised` | `#fffdf8`          | `#24211d`          | chips, meanwhile callouts, cards                        |
+| `--rule`         | `#e2dacb`          | `#3a3631`          | borders, dividers                                       |
+| `--ink-1`        | `#22201c` (14.8:1) | `#f0ebe0` (14.9:1) | primary text                                            |
+| `--ink-2`        | `#5c564c` (6.6:1)  | `#b5ad9f` (8.0:1)  | secondary text, quantities, timecodes                   |
+| `--ink-3`        | `#8a8377`          | `#857e72`          | non-text decoration only (icons beside text, dash gaps) |
 
 Contrast ratios are measured against `--paper`. `--ink-2` also passes on `--paper-raised` (7.2:1 light / 7.2:1 dark).
 
 **Line colors.** These were validated with the dataviz palette checker against both surfaces, all pairs (every pair of lines can be on screen at once). Lightness, chroma, CVD separation, normal-vision separation, and 3:1 contrast all pass.
 
-| Slot | Name | Light | Dark |
-|---|---|---|---|
-| 1 (trunk) | tomato | `#d4471f` | `#e8643a` |
-| 2 | blueberry | `#2a6fc4` | `#4a8fe0` |
-| 3 | herb | `#1a8f5c` | `#2c9e6c` |
-| 4 | cast iron (neutral) | `#6b655c` | `#a39c8d` |
+| Slot      | Name                | Light     | Dark      |
+| --------- | ------------------- | --------- | --------- |
+| 1 (trunk) | tomato              | `#d4471f` | `#e8643a` |
+| 2         | blueberry           | `#2a6fc4` | `#4a8fe0` |
+| 3         | herb                | `#1a8f5c` | `#2c9e6c` |
+| 4         | cast iron (neutral) | `#6b655c` | `#a39c8d` |
 
 - Worst all-pairs CVD ΔE is 8.7 in light mode and 8.5 in dark (the target is ≥ 8).
-- A 4th *chromatic* hue (saffron, plum, etc.) failed: saffron is too close to tomato under deuteranopia, and plum is too close to blueberry. So slot 4 is a deliberate neutral, which differs from the other three by chroma.
+- A 4th _chromatic_ hue (saffron, plum, etc.) failed: saffron is too close to tomato under deuteranopia, and plum is too close to blueberry. So slot 4 is a deliberate neutral, which differs from the other three by chroma.
 - A 5th concurrent lane is a validation warning. It reuses slot 4 with a dotted pattern.
 - Slots are assigned **from the trunk outward**: the trunk gets tomato, the lane next to it blueberry, and so on.
 - Line colors are never used for text or UI chrome.
 
 **Type.** Load from Google Fonts with `display=swap` and system fallbacks.
 
-| Token | Spec | Use |
-|---|---|---|
-| `--font-ui` | Atkinson Hyperlegible Next, `system-ui` | everything by default |
-| `--font-num` | Atkinson Hyperlegible Mono, `ui-monospace` | timecodes, durations |
-| `--font-title` | Fraunces (opsz axis), `Georgia` | recipe title only |
-| `--text-title` | 600 28/32 `--font-title` | recipe title |
-| `--text-station` | 700 17/24 | station title |
-| `--text-body` | 400 16/24 | body, meanwhile |
-| `--text-chip` | 400 14/20 | ingredient chips |
-| `--text-num` | 500 13/20 `--font-num`, `tabular-nums` | timecode, duration |
-| `--text-label` | 700 11/16, letter-spacing 0.06em, uppercase | eyebrow, legend |
+| Token            | Spec                                        | Use                   |
+| ---------------- | ------------------------------------------- | --------------------- |
+| `--font-ui`      | Atkinson Hyperlegible Next, `system-ui`     | everything by default |
+| `--font-num`     | Atkinson Hyperlegible Mono, `ui-monospace`  | timecodes, durations  |
+| `--font-title`   | Fraunces (opsz axis), `Georgia`             | recipe title only     |
+| `--text-title`   | 600 28/32 `--font-title`                    | recipe title          |
+| `--text-station` | 700 17/24                                   | station title         |
+| `--text-body`    | 400 16/24                                   | body, meanwhile       |
+| `--text-chip`    | 400 14/20                                   | ingredient chips      |
+| `--text-num`     | 500 13/20 `--font-num`, `tabular-nums`      | timecode, duration    |
+| `--text-label`   | 700 11/16, letter-spacing 0.06em, uppercase | eyebrow, legend       |
 
 Atkinson Hyperlegible is designed for legibility at low vision, distance and glance, which is the kitchen use case. Fraunces gives the title some cookbook warmth and appears nowhere else.
 
 **Spacing, shape, controls**
+
 - Spacing scale: 4, 8, 12, 16, 24, 32, 48 (`--space-1`…`--space-7`).
 - Radii: `--radius-chip` 6px, `--radius-card` 12px.
 - Every tap target is at least 44×44 px.
@@ -311,7 +328,8 @@ Each row is `display:flex; min-height:64px` with two parts:
 - **Content:** `flex:1; min-width:0; padding:12px 0 16px; display:flex; flex-direction:column; gap:8px`.
 
 **Lanes**
-- Lane *i* (0 = leftmost) is centered at `x = 14 + 28i`.
+
+- Lane _i_ (0 = leftmost) is centered at `x = 14 + 28i`.
 - Each line segment is a 4 px wide absolutely positioned element at `left: x − 2`.
 - The trunk is the rightmost lane.
 - The other components sit to its left, ordered by **merge time**: the one that merges earliest is nearest its target. This keeps merge bars from crossing live lines.
@@ -319,6 +337,7 @@ Each row is `display:flex; min-height:64px` with two parts:
 - Lanes are reused once their component has merged, if a later component fits.
 
 **Line segments.** For each lane that is live during a row, draw two half-segments that meet at the dot center (24 px):
+
 - **Above the dot** is the run-up to this row. It is styled by the component's state at the **previous** row's start time.
 - **Below the dot** is what happens from this row on. It is styled by the state at **this** row's start time.
 - **Solid** (`background: <line color>`) if the component has an active or tending station running at that time.
@@ -329,17 +348,20 @@ Each row is `display:flex; min-height:64px` with two parts:
 - **Merge row** (the row of the station that merges the component): only the upper half is drawn. A horizontal **merge bar** in the source line's color is drawn at `top:22px; height:4px`, spanning from the source x to the target x. The source lane ends there.
 
 **Station dot** (on the station's own lane):
+
 - 16×16 circle at `top:16px; left:x−8`
 - `border: 3px solid <line color>; background: --paper`
 - **Terminal station:** a 22×22 circle filled with the trunk color, with a 3px `--paper` inner ring (`box-shadow: inset 0 0 0 3px var(--paper)`), at `top:13px; left:x−11`. Every lane ends at 24 px in this row.
 
 **Wait (broken line).** A wait (§5.4 step 8) is drawn as its own row after the row it follows, like an axis break on a chart: time is compressed here.
+
 - The row has `min-height: 44px`, content vertically centered.
 - Each live lane draws a segment from 0 to 14 px, a gap, then a segment from 30 px to the bottom. Both are in the lane's style at the wait's start (normally dashed).
 - Two slashes sit in the gap, 14×3 px each, rotated −30°, in the lane color, centered on the lane at `top: 16px` and `top: 23px`.
 - Label: `Wait ~1h 45m` in `--text-num`, `--ink-2`.
 
 **Content**
+
 1. **Heading line** (flex, gap 8px, baseline, wraps):
    - **Timecode:** elapsed `h:mm` (`0:20`, `1:05`), `--text-num`, `--ink-2`. Timecodes are sums of estimates and are always approximate. The `~` in the eyebrow covers them, so they don't repeat `~` on every row.
    - **Station title:** `--text-station`.
@@ -348,7 +370,7 @@ Each row is `display:flex; min-height:64px` with two parts:
    - Style: `--text-chip`, background `--paper-raised`, 1px `--rule` border, `--radius-chip`, padding `2px 8px`.
    - Ingredient: `{name}` in `--ink-1`, then ` {qty}{, prep}` in `--ink-2`, e.g. `garlic 4 cloves, minced`.
    - Merged component: `+ {outputName ?? name}`.
-   - The `+ ` prefix is used on every station except a component's first, where the ingredients *start* the line.
+   - The `+ ` prefix is used on every station except a component's first, where the ingredients _start_ the line.
    - The terminal station shows no merge chips.
 3. **Meanwhile callout** (when the station hosts prep):
    - Container: `--paper-raised` background, `--radius-card`, padding `8px 12px`, and a 3px left border in `--ink-3`.
@@ -358,28 +380,30 @@ Each row is `display:flex; min-height:64px` with two parts:
 
 ### 6.4 Duration display
 
-| Basis | Display | Style |
-|---|---|---|
-| `estimated`, `stated` | `~8m`, `~8–10m` | `--text-num`, `--ink-2` |
-| `exact` | `⏱ 6m` | 16px stopwatch icon (inline SVG, `currentColor`) + `--text-num` at weight 700, `--ink-1` |
+| Basis                 | Display         | Style                                                                                    |
+| --------------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| `estimated`, `stated` | `~8m`, `~8–10m` | `--text-num`, `--ink-2`                                                                  |
+| `exact`               | `⏱ 6m`          | 16px stopwatch icon (inline SVG, `currentColor`) + `--text-num` at weight 700, `--ink-1` |
 
 - `aria-label` reads "about 8 minutes" or "exactly 6 minutes".
 - When a station is expanded (§6.5), it shows the source line:
-  - *Recipe says "8 to 10 minutes"* (from `quote`), or *Estimated*
-  - then the `cue` if there is one: *until soft and translucent*.
+  - _Recipe says "8 to 10 minutes"_ (from `quote`), or _Estimated_
+  - then the `cue` if there is one: _until soft and translucent_.
 
   The cue is the real doneness signal and is never hidden behind the number.
 
 ### 6.5 Interaction (v1)
+
 - **Tap a station:** it expands in place to show the time source, `cue`, and `detail`. Tap again to collapse. The whole row is the tap target.
 - **Tap a legend entry:** highlights that line. Other lines and their dots drop to 25% opacity. Tap again to clear.
-- **Export:** renders the map container to PNG at 2× via `html-to-image`, then opens the Web Share API (falls back to a download). The export uses the current theme.
+- **Export (Share image):** renders the map, without the top bar or the actions, to PNG at 2× via `html-to-image`. Where the browser can share files, it opens the share sheet; otherwise it downloads `<title>.png`. It uses the current theme. The Google Fonts stylesheet is loaded with `crossorigin="anonymous"` so the export can embed the fonts; without that, the image falls back to system fonts and the text reflows.
 
 ---
 
-## 7. Edit screen
+## 7. Edit screen - DEFERRED
 
 A list grouped by component (with line color and name), where you can:
+
 - rename stations, and change attention and duration (min/max/basis)
 - move an ingredient to another station, and edit its qty and prep
 - change which station a component merges into, and reorder stations within a component
