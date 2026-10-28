@@ -1,4 +1,4 @@
-# Reciper — Spec
+# Cookline — Spec
 
 Turn a photo of a recipe into a **transit map**: a phone-sized, vertical chart where each component of the dish (rice, eggplant, sauce…) is a colored line, steps are stations in the order you start them, and lines merge where components combine. The point is to see at a glance what runs in parallel, when your hands are free, and what to prep during that downtime, so you don't need full mise en place before you start.
 
@@ -45,12 +45,13 @@ The structural reference is `designs/C · Transit map-html/C-Transit.dc.html` (s
 
 ## 3. User flows
 
-1. **First run:** Settings prompts for the OpenRouter key and model (with a default preselected). A "Test key" button makes one cheap call.
+1. **First run:** Settings prompts for the OpenRouter key and model (with a default preselected). A "Test key" button checks the key for free.
+   Until the Library exists (milestone 4), Home shows **New recipe**, the last recipe read, and the example fixtures.
 2. **Capture:** From the Library, tap **New**. Choose:
    - **Camera** (`<input type="file" accept="image/*" capture="environment">`)
    - **Photos** (multi-select, for recipes spread over 2+ pages or screenshots)
    - **Paste text**
-3. **Processing:** progress states: *Reading recipe → Building map → Scheduling*. You can cancel. Errors show the reason and a **Retry** button.
+3. **Processing:** progress states: *Reading recipe…*, then *Fixing a few problems…* if a repair pass runs. Scheduling and layout are local and instant. You can cancel. Errors show the reason and a **Try again** button. Validation errors also show the list and the raw model output.
 4. **Map:** the transit map (§6). Actions: **Edit**, **Share/Export PNG**, **Re-extract**, **Delete**.
 5. **Edit:** a form-level editor for the extracted graph (§7). Saving re-runs scheduling and layout locally, with no model call.
 6. **Library:** saved recipes, newest first, showing title and `~total`. Works offline.
@@ -77,8 +78,10 @@ render + save
 ```
 
 ### 4.1 Model call
-- One request, with the image(s) as `image_url` data URLs, plus the system prompt in **Appendix A**. Use `response_format: { type: "json_schema", strict: true }`, with the schema generated from the zod types in §5.1.
-- The model is configurable. Ship a default cheap vision model that supports structured outputs, chosen by the eval in §9. The UI warns if the selected model lacks image input or structured output support (from OpenRouter's `/models` metadata).
+- One request, with the image(s) as `image_url` data URLs, plus the system prompt in **Appendix A**. Use `response_format: { type: "json_schema", strict: true }` and `provider: { require_parameters: true }`, so OpenRouter only routes to providers that honor the schema.
+- **Wire format** (`src/model/schema.ts`): strict mode needs every property present, so the schema the model fills in is the §5.1 types with optional fields made **nullable** instead of omitted. `fromWire` turns nulls into missing fields. The JSON Schema is generated from zod.
+- The model is configurable in Settings. The picker lists only models from OpenRouter's `/models` that take image input and support `structured_outputs` (excluding batch-only and router models), sorted by price. The default is `anthropic/claude-haiku-5.5` ($0.10 / $0.50 per M tokens, roughly 0.2¢ per recipe); the eval in §9 revisits it.
+- **Test key** uses `GET /api/v1/key`, which costs nothing and reports the remaining credit.
 - The prompt lives in `src/extract/prompt.ts` as a versioned constant. Each saved recipe records `promptVersion` and `model` so eval results stay comparable.
 
 ### 4.2 Repair
@@ -460,17 +463,18 @@ Scheduling and layout are **pure functions** with no DOM. The UI renders `RowMod
 
 ## Appendix A — Extraction prompt (v1)
 
-System prompt, sent with the JSON schema from §5.1. Few-shot examples (2–3 compact input → JSON pairs taken from the fixtures) are appended after it in `prompt.ts`.
+System prompt, sent with the JSON schema. `src/extract/prompt.ts` is the source of truth; this copy is v1. Two worked examples follow it as earlier user/assistant turns: the source texts in `fixtures/sources/` paired with the `garlic-shrimp` and `sausage-pasta` fixtures in wire format.
 
 ```text
 You convert a recipe (from photos or text) into a structured cooking plan for a
 single home cook. Output JSON matching the provided schema exactly. Do not add
-commentary.
+commentary. Use null for optional fields you have nothing for.
 
 READ
 - Transcribe the recipe faithfully, across all images in order. If something is
   illegible, leave it out rather than guess.
-- Never invent ingredients, quantities, or times. Omit a quantity you cannot read.
+- Never invent ingredients, quantities, or times. Use null for a quantity you
+  cannot read.
 
 COMPONENTS
 - Split the dish into components: things prepared separately and later combined
@@ -486,10 +490,10 @@ STATIONS
   happens to that component: "Sweat", "Bloom spices", "Simmer, lid on".
   Titles are 1–4 words, imperative, no ingredient lists.
 - Put each ingredient in the `adds` of the station where it goes in.
-- Small ingredient prep (mince, chop, grate, juice, zest, drain, measure) is NOT a
-  station. Record it as the ingredient's `prep`, with `verb` in the imperative
-  ("mince", "drain and rinse") and `done` as the past participle ("minced",
-  "drained"). Exception: if the prep is what starts a component
+- Small ingredient prep (mince, chop, grate, juice, zest, drain, measure, pat
+  dry) is NOT a station. Record it as the ingredient's `prep`, with `verb` in
+  the imperative ("mince", "drain and rinse") and `done` as the past participle
+  ("minced", "drained"). Exception: if the prep is what starts a component
   ("Dice the eggplant" as the first thing done to it), make it that component's
   first station.
 - If one ingredient is used at two different points ("half the butter now, the
@@ -497,6 +501,8 @@ STATIONS
 - Put the recipe's original sentence(s) for the step in `detail`. Put the doneness
   signal, if the recipe gives one, in `cue` ("until soft and translucent",
   "until a skewer comes out clean", "until doubled").
+- Ids are short lowercase slugs ("dice-onion"), unique across the recipe. Do not
+  start a station id with "prep-".
 
 ATTENTION
 - "active": the cook's hands are busy the whole time (chopping, kneading,
@@ -509,7 +515,7 @@ ATTENTION
 
 DURATION — classify every station's and prep's time with `basis`:
 - "estimated": the recipe gives no time for this. Estimate a realistic time for a
-  home cook. Do not set `quote`.
+  home cook. Set `quote` to null.
 - "stated": the recipe gives a time, but the real test of doneness is something
   you can see, smell, taste, or touch, so the time is a guide. This is the
   normal case for recipe times. "Sauté 5–7 minutes until golden", "bake 25
@@ -526,15 +532,15 @@ DURATION — classify every station's and prep's time with `basis`:
     - steeping tea or coffee for a set time
     - a recipe that explicitly says "exactly", "no more than", "set a timer"
   If you are unsure, use "stated". Set `quote` to the time phrase verbatim.
-- Ranges: "8 to 10 minutes" → min 8, max 10. Single values: min only.
-- Times are in minutes; convert hours ("1½ hours" → 90) and seconds
+- Ranges: "8 to 10 minutes" → min 8, max 10. Single values: min only, max null.
+- Times are whole minutes; convert hours ("1½ hours" → 90) and seconds
   ("90 seconds" → 2, rounding up).
 
 CHECK BEFORE ANSWERING
 - Every ingredient appears in exactly one station's `adds`.
 - Every non-trunk component is merged exactly once; the trunk is never merged.
 - The last station of the trunk is the final step (usually serving/finishing).
-- Every "stated" or "exact" duration has a verbatim `quote`; no "estimated" one does.
+- Every "stated" or "exact" duration has a verbatim `quote\
 ```
 
 The repair call reuses this prompt and adds: "The previous output failed validation with these errors: {errors}. Return the corrected JSON in full."

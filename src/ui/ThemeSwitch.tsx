@@ -1,8 +1,8 @@
 import { useEffect, useState } from "preact/hooks";
-import { read, write } from "./storage";
+import { read, write } from "../store/storage";
 
 type Theme = "system" | "light" | "dark";
-const KEY = "reciper.theme";
+const KEY = "cookline.theme";
 
 export function applyStoredTheme() {
   apply((read(KEY) as Theme | null) ?? "system");

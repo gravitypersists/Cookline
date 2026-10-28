@@ -3,32 +3,138 @@
   "servings": "2",
   "trunk": "shrimp",
   "ingredients": [
-    { "id": "butter", "name": "butter", "qty": "3 tbsp" },
-    { "id": "garlic", "name": "garlic", "qty": "5 cloves",
-      "prep": { "verb": "mince", "done": "minced", "duration": { "min": 3, "basis": "estimated" } } },
-    { "id": "shallot", "name": "shallot", "qty": "1",
-      "prep": { "verb": "slice", "done": "sliced", "duration": { "min": 2, "basis": "estimated" } } },
-    { "id": "chili", "name": "chili flakes", "qty": "a pinch" },
-    { "id": "shrimp", "name": "shrimp", "qty": "1 lb",
-      "prep": { "verb": "pat dry", "done": "patted dry", "duration": { "min": 2, "basis": "estimated" } } },
-    { "id": "lemon", "name": "lemon", "qty": "½",
-      "prep": { "verb": "juice", "done": "juiced", "duration": { "min": 1, "basis": "estimated" } } },
-    { "id": "parsley", "name": "parsley", "qty": "2 tbsp",
-      "prep": { "verb": "chop", "done": "chopped", "duration": { "min": 2, "basis": "estimated" } } }
+    {
+      "id": "butter",
+      "name": "butter",
+      "qty": "3 tbsp"
+    },
+    {
+      "id": "garlic",
+      "name": "garlic",
+      "qty": "5 cloves",
+      "prep": {
+        "verb": "mince",
+        "done": "minced",
+        "duration": {
+          "min": 3,
+          "basis": "estimated"
+        }
+      }
+    },
+    {
+      "id": "shallot",
+      "name": "shallot",
+      "qty": "1",
+      "prep": {
+        "verb": "slice",
+        "done": "sliced",
+        "duration": {
+          "min": 2,
+          "basis": "estimated"
+        }
+      }
+    },
+    {
+      "id": "chili",
+      "name": "chili flakes",
+      "qty": "a pinch"
+    },
+    {
+      "id": "shrimp",
+      "name": "shrimp",
+      "qty": "1 lb",
+      "prep": {
+        "verb": "pat dry",
+        "done": "patted dry",
+        "duration": {
+          "min": 2,
+          "basis": "estimated"
+        }
+      }
+    },
+    {
+      "id": "lemon",
+      "name": "lemon",
+      "qty": "½",
+      "prep": {
+        "verb": "juice",
+        "done": "juiced",
+        "duration": {
+          "min": 1,
+          "basis": "estimated"
+        }
+      }
+    },
+    {
+      "id": "parsley",
+      "name": "parsley",
+      "qty": "2 tbsp",
+      "prep": {
+        "verb": "chop",
+        "done": "chopped",
+        "duration": {
+          "min": 2,
+          "basis": "estimated"
+        }
+      }
+    }
   ],
   "components": [
     {
       "id": "shrimp",
       "name": "Shrimp",
       "stations": [
-        { "id": "sizzle", "title": "Sizzle garlic", "attention": "active",
-          "duration": { "min": 1, "basis": "stated", "quote": "30 seconds" },
-          "adds": ["butter", "garlic", "shallot", "chili"], "merges": [], "cue": "until fragrant, not brown" },
-        { "id": "sear", "title": "Sear shrimp", "attention": "tending",
-          "duration": { "min": 3, "max": 4, "basis": "stated", "quote": "3 to 4 minutes" },
-          "adds": ["shrimp"], "merges": [], "cue": "until pink and just opaque" },
-        { "id": "finish", "title": "Finish", "attention": "active",
-          "duration": { "min": 1, "basis": "estimated" }, "adds": ["lemon", "parsley"], "merges": [] }
+        {
+          "id": "sizzle",
+          "title": "Sizzle garlic",
+          "attention": "active",
+          "duration": {
+            "min": 1,
+            "basis": "stated",
+            "quote": "30 seconds"
+          },
+          "adds": [
+            "butter",
+            "garlic",
+            "shallot",
+            "chili"
+          ],
+          "merges": [],
+          "cue": "until fragrant but not brown",
+          "detail": "Melt the butter in a large skillet over medium heat. Add the garlic, shallot and chili flakes and cook 30 seconds, until fragrant but not brown."
+        },
+        {
+          "id": "sear",
+          "title": "Sear shrimp",
+          "attention": "tending",
+          "duration": {
+            "min": 3,
+            "max": 4,
+            "basis": "stated",
+            "quote": "3 to 4 minutes"
+          },
+          "adds": [
+            "shrimp"
+          ],
+          "merges": [],
+          "cue": "until pink and just opaque",
+          "detail": "Add the shrimp in one layer and cook 3 to 4 minutes, turning once, until pink and just opaque."
+        },
+        {
+          "id": "finish",
+          "title": "Finish",
+          "attention": "active",
+          "duration": {
+            "min": 1,
+            "basis": "estimated"
+          },
+          "adds": [
+            "lemon",
+            "parsley"
+          ],
+          "merges": [],
+          "detail": "Squeeze in the lemon juice, scatter with parsley and serve."
+        }
       ]
     }
   ]

@@ -1,5 +1,5 @@
-// Recipe graph as extracted by the model (SPEC §5.1). Zod schemas replace
-// these hand-written types in milestone 3.
+// Recipe graph as the app uses it (SPEC §5.1). The model returns the nullable
+// wire format in schema.ts, which fromWire converts into these types.
 
 export type Attention = "active" | "tending" | "passive";
 

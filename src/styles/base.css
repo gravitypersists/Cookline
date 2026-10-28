@@ -44,6 +44,7 @@ button {
 
 .segmented {
   display: inline-flex;
+  align-self: flex-start;
   border: 1px solid var(--rule);
   border-radius: var(--radius-card);
   overflow: hidden;
@@ -64,14 +65,125 @@ button {
   color: var(--paper);
 }
 
-.footer {
-  padding-top: 0;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
+.topbar {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: env(safe-area-inset-top) var(--space-2) 0;
 }
 
+.topbar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-2);
+  color: var(--ink-2);
+  font: var(--text-chip);
+  text-decoration: none;
+}
+
+/* The map page's own top padding sits under the top bar. */
+.topbar + .page {
+  padding-top: var(--space-2);
+}
+
+a {
+  color: var(--ink-1);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.section h2 {
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.card {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-card);
+  padding: var(--space-3) var(--space-4);
+}
+
+.link-card {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  text-decoration: none;
+  font: var(--text-station);
+}
+
+.error-card {
+  border-color: var(--line-1);
+}
+
+.error-card p,
+.error-card ul {
+  margin: 0 0 var(--space-2);
+}
+
+.error-card pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  font: 400 12px/16px var(--font-num);
+  color: var(--ink-2);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-card);
+  background: transparent;
+  color: var(--ink-1);
+  font: var(--text-station);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button.primary {
+  background: var(--ink-1);
+  border-color: var(--ink-1);
+  color: var(--paper);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-1);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.input,
 .select {
   min-height: var(--tap);
   padding: 0 var(--space-3);
@@ -79,6 +191,76 @@ button {
   border-radius: var(--radius-card);
   background: var(--paper-raised);
   color: var(--ink-1);
-  font: var(--text-chip);
+  font: var(--text-body);
   max-width: 100%;
+}
+
+.field-row .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.textarea {
+  min-height: 240px;
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.note {
+  margin: 0;
+  color: var(--ink-2);
+  font: var(--text-chip);
+}
+
+.note.error {
+  color: var(--ink-1);
+}
+
+ul.note {
+  padding-left: var(--space-4);
+}
+
+.status {
+  margin: 0;
+  font: var(--text-station);
+}
+
+.thumbs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--space-2);
+}
+
+.thumbs li {
+  position: relative;
+}
+
+.thumbs img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--radius-chip);
+  border: 1px solid var(--rule);
+}
+
+.thumb-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  background: none;
+  color: var(--paper);
+  text-shadow: 0 0 3px #000;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.meta {
+  padding-top: 0;
 }
